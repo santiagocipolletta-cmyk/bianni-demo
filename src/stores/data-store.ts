@@ -328,6 +328,19 @@ export const useDataStore = create<DataState>()(
     }),
     {
       name: 'bianni-data',
+      version: 2,
+      // On version bump, merge always uses fresh product/category data from mock
+      merge: (persisted, current) => ({
+        ...(persisted as Partial<DataState>),
+        ...current,
+        // Always use fresh static data so image paths / seed changes propagate
+        products: PRODUCTS,
+        categories: CATEGORIES,
+        priceLists: PRICE_LISTS,
+        productPrices: PRODUCT_PRICES,
+        sellers: SELLERS,
+        assets: ASSETS,
+      }),
     }
   )
 )
