@@ -115,89 +115,18 @@ function HeroSection({ onLoginClick }: { onLoginClick: () => void }) {
 
 function StatementSection() {
   return (
-    <section className="relative bg-black overflow-hidden py-20 md:py-28 lg:py-36 px-8 md:px-16 lg:px-24">
-
-      {/* Vertical rule left */}
-      <motion.div
-        className="absolute left-8 md:left-16 lg:left-24 top-20 bottom-20 w-px bg-zinc-800"
-        initial={{ scaleY: 0 }}
-        whileInView={{ scaleY: 1 }}
-        viewport={{ once: true }}
-        style={{ originY: 0 }}
-        transition={{ duration: 1.1, ease: EASE_OUT }}
-      />
-
-      <div className="pl-6 md:pl-8">
-
-        {/* Overline */}
-        <motion.div
-          className="flex items-center gap-4 mb-10 overflow-hidden"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: EASE_OUT }}
-        >
-          <div className="w-8 h-px bg-white/20" />
-          <p className="text-[9px] tracking-[0.45em] uppercase text-zinc-500">
-            DISEÑO · IDENTIDAD · EXCLUSIVIDAD
-          </p>
-        </motion.div>
-
-        {/* Main statement — big, line by line */}
-        <div className="mb-10 space-y-1">
-          {[
-            { text: 'La marca de lentes que', dim: true },
-            { text: 'potencia tu óptica.', dim: false },
-          ].map((line, i) => (
-            <div key={i} className="overflow-hidden">
-              <motion.h2
-                className={`font-display font-light leading-[1.0] tracking-[-0.01em] ${
-                  line.dim
-                    ? 'text-zinc-500 text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl'
-                    : 'text-white  text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl'
-                }`}
-                initial={{ y: '110%' }}
-                whileInView={{ y: '0%' }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.9, delay: i * 0.13, ease: EASE_OUT }}
-              >
-                {line.text}
-              </motion.h2>
-            </div>
-          ))}
-        </div>
-
-        {/* Separator */}
-        <motion.div
-          className="w-full h-px bg-zinc-800 mb-10"
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true }}
-          style={{ originX: 0 }}
-          transition={{ duration: 1, delay: 0.3, ease: EASE_OUT }}
-        />
-
-        {/* Three pillars */}
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-0 sm:divide-x sm:divide-zinc-800"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.45, ease: EASE_OUT }}
-        >
-          {[
-            { label: 'CERTIFICACIÓN', value: 'Europea' },
-            { label: 'PEDIDO MÍNIMO', value: 'Sin límite' },
-            { label: 'ENVÍOS', value: 'Todo el país' },
-          ].map(({ label, value }) => (
-            <div key={label} className="sm:px-8 first:pl-0 last:pr-0">
-              <p className="text-[8px] tracking-[0.35em] uppercase text-zinc-600 mb-1.5">{label}</p>
-              <p className="font-display text-xl md:text-2xl text-white font-light">{value}</p>
-            </div>
-          ))}
-        </motion.div>
-
-      </div>
+    <section className="bg-black py-16 md:py-20 px-8 md:px-16 lg:px-24 overflow-hidden">
+      <motion.p
+        className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light leading-[1.25] text-zinc-400 max-w-4xl"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-60px' }}
+        transition={{ duration: 0.9, ease: EASE_OUT }}
+      >
+        La marca de lentes que{' '}
+        <span className="text-white">potencia tu óptica.</span>{' '}
+        Certificación europea, sin pedido mínimo, envíos a todo el país.
+      </motion.p>
     </section>
   )
 }
