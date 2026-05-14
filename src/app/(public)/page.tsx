@@ -115,63 +115,89 @@ function HeroSection({ onLoginClick }: { onLoginClick: () => void }) {
 
 function StatementSection() {
   return (
-    <section className="bg-black pt-14 pb-10 md:pt-16 md:pb-12 px-8 md:px-16 lg:px-24 overflow-hidden">
-      {/* Overline */}
-      <div className="overflow-hidden mb-5">
-        <motion.p
-          className="text-[10px] tracking-[0.4em] uppercase text-zinc-500"
-          initial={{ opacity: 0, y: 14 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.6, ease: EASE_OUT }}
-        >
-          DISEÑO · IDENTIDAD · EXCLUSIVIDAD
-        </motion.p>
-      </div>
+    <section className="relative bg-black overflow-hidden py-20 md:py-28 lg:py-36 px-8 md:px-16 lg:px-24">
 
-      {/* Line 1 */}
-      <div className="overflow-hidden">
-        <motion.h2
-          className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white font-light leading-[1.05] max-w-3xl"
-          initial={{ y: '105%' }}
-          whileInView={{ y: '0%' }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.85, ease: EASE_OUT }}
-        >
-          Conoce nuestra línea exclusiva
-        </motion.h2>
-      </div>
-      {/* Line 2 */}
-      <div className="overflow-hidden mb-6">
-        <motion.h2
-          className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light leading-[1.05] max-w-3xl"
-          style={{ color: '#A0A0A0' }}
-          initial={{ y: '105%' }}
-          whileInView={{ y: '0%' }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.85, delay: 0.12, ease: EASE_OUT }}
-        >
-          de lentes <span className="text-white italic">Bianni.</span>
-        </motion.h2>
-      </div>
-
-      {/* Tagline */}
+      {/* Vertical rule left */}
       <motion.div
-        className="flex flex-col sm:flex-row items-start sm:items-center gap-6"
-        initial={{ opacity: 0, y: 14 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px' }}
-        transition={{ duration: 0.6, delay: 0.25, ease: EASE_OUT }}
-      >
-        <p className="text-zinc-500 text-sm leading-relaxed max-w-sm">
-          La marca de lentes que <span className="text-white">potencia tu óptica</span>.
-          Certificación europea, sin pedido mínimo, envíos a todo el país.
-        </p>
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="w-6 h-px bg-zinc-700" />
-          <span className="text-[9px] tracking-[0.3em] uppercase text-zinc-600">Colección 2026</span>
+        className="absolute left-8 md:left-16 lg:left-24 top-20 bottom-20 w-px bg-zinc-800"
+        initial={{ scaleY: 0 }}
+        whileInView={{ scaleY: 1 }}
+        viewport={{ once: true }}
+        style={{ originY: 0 }}
+        transition={{ duration: 1.1, ease: EASE_OUT }}
+      />
+
+      <div className="pl-6 md:pl-8">
+
+        {/* Overline */}
+        <motion.div
+          className="flex items-center gap-4 mb-10 overflow-hidden"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, ease: EASE_OUT }}
+        >
+          <div className="w-8 h-px bg-white/20" />
+          <p className="text-[9px] tracking-[0.45em] uppercase text-zinc-500">
+            DISEÑO · IDENTIDAD · EXCLUSIVIDAD
+          </p>
+        </motion.div>
+
+        {/* Main statement — big, line by line */}
+        <div className="mb-10 space-y-1">
+          {[
+            { text: 'La marca de lentes que', dim: true },
+            { text: 'potencia tu óptica.', dim: false },
+          ].map((line, i) => (
+            <div key={i} className="overflow-hidden">
+              <motion.h2
+                className={`font-display font-light leading-[1.0] tracking-[-0.01em] ${
+                  line.dim
+                    ? 'text-zinc-500 text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl'
+                    : 'text-white  text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl'
+                }`}
+                initial={{ y: '110%' }}
+                whileInView={{ y: '0%' }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.9, delay: i * 0.13, ease: EASE_OUT }}
+              >
+                {line.text}
+              </motion.h2>
+            </div>
+          ))}
         </div>
-      </motion.div>
+
+        {/* Separator */}
+        <motion.div
+          className="w-full h-px bg-zinc-800 mb-10"
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          style={{ originX: 0 }}
+          transition={{ duration: 1, delay: 0.3, ease: EASE_OUT }}
+        />
+
+        {/* Three pillars */}
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-0 sm:divide-x sm:divide-zinc-800"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.45, ease: EASE_OUT }}
+        >
+          {[
+            { label: 'CERTIFICACIÓN', value: 'Europea' },
+            { label: 'PEDIDO MÍNIMO', value: 'Sin límite' },
+            { label: 'ENVÍOS', value: 'Todo el país' },
+          ].map(({ label, value }) => (
+            <div key={label} className="sm:px-8 first:pl-0 last:pr-0">
+              <p className="text-[8px] tracking-[0.35em] uppercase text-zinc-600 mb-1.5">{label}</p>
+              <p className="font-display text-xl md:text-2xl text-white font-light">{value}</p>
+            </div>
+          ))}
+        </motion.div>
+
+      </div>
     </section>
   )
 }
