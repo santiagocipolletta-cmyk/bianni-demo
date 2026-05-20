@@ -15,6 +15,7 @@ const PROTECTED_PREFIXES = [
   '/completar-datos',
   '/admin',
   '/marketing',
+  '/vendedor',
 ]
 
 export function middleware(request: NextRequest) {
@@ -48,5 +49,6 @@ export const config = {
     '/completar-datos/:path*',
     '/admin/:path*',
     '/marketing/:path*',
+    '/vendedor/:path*',
   ],
 }

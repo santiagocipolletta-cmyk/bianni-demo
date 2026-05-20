@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useDataStore } from '@/stores/data-store'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { Plus, Minus } from 'lucide-react'
+import { Plus, Minus, ScanLine } from 'lucide-react'
 
 type StockFilter = 'todos' | 'normal' | 'bajo' | 'critico'
 type AdjustMode = 'set' | 'add' | 'subtract'
@@ -16,7 +16,11 @@ function getEstado(disponible: number): { label: string; cls: string } {
 }
 
 export default function AdminStockPage() {
-  const { stock, products, categories, updateStock } = useDataStore()
+  const { stock, products, categories, updateStock, ingresoStock } = useDataStore()
+  const barcodeInputRef = useRef<HTMLInputElement>(null)
+  const [barcodeInput, setBarcodeInput] = useState('')
+  const [scanCantidad, setScanCantidad] = useState(1)
+  const [scanLog, setScanLog] = useState<{ sku: string; name: string; cantidad: number }[]>([])
   const [filter, setFilter] = useState<StockFilter>('todos')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState<number>(0)
@@ -57,6 +61,31 @@ export default function AdminStockPage() {
     { key: 'critico', label: 'Crítico (≤5)' },
   ]
 
+  function handleBarcodeSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const code = barcodeInput.trim().toUpperCase()
+    if (!code) return
+    const product = products.find((p) => p.sku.toUpperCase() === code || p.id === code)
+    if (!product) {
+      toast.error(`Producto no encontrado: ${code}`)
+      setBarcodeInput('')
+      barcodeInputRef.current?.focus()
+      return
+    }
+    ingresoStock(product.id, scanCantidad, 'Giuliana Bianni', `Ingreso por código de barras: ${code} ×${scanCantidad}`)
+    setScanLog((prev) => {
+      // Si ya estaba en el log, sumar cantidades
+      const existing = prev.find((s) => s.sku === product.sku)
+      if (existing) {
+        return prev.map((s) => s.sku === product.sku ? { ...s, cantidad: s.cantidad + scanCantidad } : s)
+      }
+      return [{ sku: product.sku, name: product.name, cantidad: scanCantidad }, ...prev]
+    })
+    toast.success(`+${scanCantidad} · ${product.name}`)
+    setBarcodeInput('')
+    barcodeInputRef.current?.focus()
+  }
+
   function startAdjust(productId: string, current: number, mode: AdjustMode) {
     setEditingId(productId)
     setAdjustMode(mode)
@@ -94,6 +123,51 @@ export default function AdminStockPage() {
           ⚠️ {criticalCount} producto{criticalCount !== 1 ? 's' : ''} con stock crítico (≤5 unidades)
         </div>
       )}
+
+      {/* Carga rápida por código de barras */}
+      <div className="border border-[#2A2A2A] bg-[#0A0A0A] p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <ScanLine size={16} className="text-emerald-400" />
+          <h3 className="text-[10px] tracking-[0.2em] uppercase text-white">Ingreso por código de barras</h3>
+        </div>
+        <p className="text-[11px] text-[#A0A0A0] mb-3">
+          Escaneá con la pistola o tipeá el SKU. Cada escaneo suma <span className="text-white">+{scanCantidad}</span> unidades al producto.
+        </p>
+        <form onSubmit={handleBarcodeSubmit} className="flex gap-2 items-end">
+          <div className="flex-1">
+            <label className="block text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">SKU</label>
+            <input
+              ref={barcodeInputRef}
+              value={barcodeInput}
+              onChange={(e) => setBarcodeInput(e.target.value)}
+              placeholder="Ej: CL-001"
+              autoFocus
+              className="w-full bg-[#000] border border-[#2A2A2A] text-white font-mono text-sm px-3 py-2 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div className="w-24">
+            <label className="block text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">Cantidad</label>
+            <input type="number" min={1} value={scanCantidad} onChange={(e) => setScanCantidad(Number(e.target.value))}
+              className="w-full bg-[#000] border border-[#2A2A2A] text-white text-sm px-3 py-2 focus:outline-none focus:border-emerald-500" />
+          </div>
+          <button type="submit"
+            className="border border-emerald-700 bg-emerald-950 text-emerald-400 text-[10px] tracking-[0.15em] uppercase px-4 py-2 hover:bg-emerald-900 transition-colors">
+            Ingresar
+          </button>
+        </form>
+
+        {scanLog.length > 0 && (
+          <div className="mt-4 border-t border-[#1A1A1A] pt-3 space-y-1 max-h-32 overflow-y-auto">
+            <p className="text-[9px] tracking-[0.2em] uppercase text-[#555]">Sesión actual</p>
+            {scanLog.map((s, i) => (
+              <div key={i} className="flex items-center justify-between text-[11px]">
+                <span className="text-[#A0A0A0]"><span className="font-mono text-white">{s.sku}</span> · {s.name}</span>
+                <span className="text-emerald-400 font-medium">+{s.cantidad}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Filter tabs */}
       <div className="flex gap-0 border border-[#2A2A2A]">
