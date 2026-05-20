@@ -24,7 +24,7 @@ const NAV_LINKS = [
   { href: '/catalogo', label: 'Catálogo', icon: Package },
   { href: '/pedidos', label: 'Mis Pedidos', icon: ShoppingCart },
   { href: '/cuenta', label: 'Cuenta Corriente', icon: CreditCard },
-  { href: '/reclamos', label: 'Reclamos', icon: MessageSquareWarning },
+  { href: '/reclamos', label: 'Garantía', icon: MessageSquareWarning },
   { href: '/contenido', label: 'Contenido', icon: FolderOpen },
 ]
 

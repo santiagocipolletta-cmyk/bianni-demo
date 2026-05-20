@@ -40,7 +40,8 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
     : null
 
   function handleConfirm() {
-    const nextCode = `P-${String(orders.length + 1).padStart(4, '0')}`
+    const solicitudCount = orders.filter((o) => o.codigo.startsWith('S-')).length + 1
+    const nextCode = `S-${String(solicitudCount).padStart(4, '0')}`
     const order = {
       id: `order_${Date.now()}`,
       codigo: nextCode,
@@ -54,9 +55,19 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
         descuentoAplicado: i.descuentoAplicado,
         picked: false,
       })),
+      subtotal: Math.round(totalARS),
       total: Math.round(totalARS),
       fecha: new Date().toISOString(),
       plazoPagoDias: client?.plazoPagoDias ?? 30,
+      tipoEntrega: 'envio' as const,
+      direccionEnvio: client?.direccion
+        ? {
+            direccion: client.direccion,
+            ciudad: client.ciudad,
+            provincia: client.provincia,
+            codigoPostal: client.codigoPostal ?? '',
+          }
+        : undefined,
     }
     addOrder(order)
     if (user) {

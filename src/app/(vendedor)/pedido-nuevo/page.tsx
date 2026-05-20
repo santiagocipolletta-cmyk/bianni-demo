@@ -88,9 +88,11 @@ function PedidoNuevoContent() {
       return
     }
 
+    const solicitudCount = orders.filter((o) => o.codigo.startsWith('S-')).length + 1
+    const total = Math.round(getTotalARS())
     const newOrder: Order = {
       id: `o_${Date.now()}`,
-      codigo: `P-${String(orders.length + 1).padStart(4, '0')}`,
+      codigo: `S-${String(solicitudCount).padStart(4, '0')}`,
       clienteId: selectedClient.id,
       sellerId: user.sellerId,
       estado: 'pendiente_revision',
@@ -101,9 +103,19 @@ function PedidoNuevoContent() {
         descuentoAplicado: i.descuentoAplicado,
         picked: false,
       })),
-      total: Math.round(getTotalARS()),
+      subtotal: total,
+      total,
       fecha: new Date().toISOString(),
       plazoPagoDias: selectedClient.plazoPagoDias,
+      tipoEntrega: 'envio',
+      direccionEnvio: selectedClient.direccion
+        ? {
+            direccion: selectedClient.direccion,
+            ciudad: selectedClient.ciudad,
+            provincia: selectedClient.provincia,
+            codigoPostal: selectedClient.codigoPostal ?? '',
+          }
+        : undefined,
     }
 
     addOrder(newOrder)

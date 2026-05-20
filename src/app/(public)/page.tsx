@@ -17,6 +17,7 @@ const ROLE_REDIRECTS: Record<UserRole, string> = {
   distribuidor: '/catalogo',
   vendedor: '/dashboard',
   admin: '/admin/pedidos',
+  marketing: '/marketing/biblioteca',
 }
 
 // ─── Shared easing ────────────────────────────────────────────────────────────
@@ -461,10 +462,13 @@ function JoinFormSection() {
     setSubmitting(true)
     addLead({
       nombre: form.nombre,
+      nombreOptica: form.optica,
       email: form.email,
       telefono: form.telefono,
+      ciudad: form.ciudad,
       mensaje: `Óptica: ${form.optica}. Ciudad: ${form.ciudad}`,
       estado: 'nuevo',
+      origen: 'formulario_web',
     })
     setTimeout(() => {
       setSubmitting(false)

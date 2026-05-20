@@ -72,7 +72,7 @@ export default function AdminStockPage() {
     } else {
       newValue = editValue
     }
-    updateStock(productId, newValue)
+    updateStock(productId, newValue, `Ajuste manual: ${adjustMode === 'add' ? '+' : adjustMode === 'subtract' ? '-' : '='}${editValue}`, 'Giuliana Bianni')
     const verb = adjustMode === 'add' ? `+${editValue} unidades cargadas` : adjustMode === 'subtract' ? `-${editValue} unidades descontadas` : 'Stock actualizado'
     toast.success(verb)
     setEditingId(null)

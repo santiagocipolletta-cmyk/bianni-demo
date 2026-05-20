@@ -123,7 +123,7 @@ export default function AdminPedidoDetailPage({
   function handleAceptar() {
     updateOrderStatus(order!.id, 'aceptado', userName)
     order!.items.forEach((item) => {
-      decrementStock(item.productId, item.cantidad)
+      decrementStock(item.productId, item.cantidad, order!.id, userName)
     })
     addNotification({
       userId: getNotifUserId(order!.clienteId),

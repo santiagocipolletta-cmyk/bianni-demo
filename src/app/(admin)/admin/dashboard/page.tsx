@@ -114,7 +114,7 @@ function KpisWidget() {
     },
     {
       label: 'Reclamos activos',
-      value: claims.filter((c) => c.estado !== 'cerrado').length,
+      value: claims.filter((c) => c.estado !== 'resuelto').length,
       sub: 'sin resolver',
       color: 'text-violet-400',
     },

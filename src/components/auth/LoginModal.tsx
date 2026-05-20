@@ -12,6 +12,7 @@ const ROLE_REDIRECTS: Record<UserRole, string> = {
   distribuidor: '/catalogo',
   vendedor: '/dashboard',
   admin: '/admin/pedidos',
+  marketing: '/marketing/biblioteca',
 }
 
 interface LoginModalProps {

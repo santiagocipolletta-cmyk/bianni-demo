@@ -56,10 +56,12 @@ function ContactForm() {
   function onSubmit(data: ContactFormData) {
     addLead({
       nombre: data.nombre,
+      nombreOptica: data.optica ?? undefined,
       email: data.email,
       telefono: data.telefono ?? '',
-      mensaje: `Óptica: ${data.optica ?? 'No indicada'}. ${data.mensaje ?? ''}`.trim(),
+      mensaje: data.mensaje ?? '',
       estado: 'nuevo',
+      origen: 'formulario_web',
     })
     setSubmitted(true)
     reset()

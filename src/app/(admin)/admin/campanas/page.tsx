@@ -12,6 +12,7 @@ type Segmento = 'todos' | 'ciudad' | 'vendedor'
 const ESTADO_BADGE: Record<Campaign['estado'], string> = {
   enviada: 'bg-emerald-950 text-emerald-400',
   borrador: 'bg-yellow-950 text-yellow-400',
+  programada: 'bg-blue-950 text-blue-400',
   fallida: 'bg-red-950 text-red-400',
 }
 
@@ -56,6 +57,8 @@ export default function AdminCampanasPage() {
     addCampaign({
       nombre: nombre.trim(),
       mensaje: preview,
+      segmentoTipo: segmento === 'todos' ? 'todas' : segmento === 'ciudad' ? 'por_ciudad' : 'por_vendedor',
+      segmentoValor: segmento === 'ciudad' ? selectedCiudad : segmento === 'vendedor' ? selectedSeller : undefined,
       destinatariosCount,
       fechaEnvio: new Date().toISOString(),
       enviadaPor: user?.name ?? 'Admin',
@@ -70,7 +73,11 @@ export default function AdminCampanasPage() {
   }
 
   const sortedCampaigns = useMemo(
-    () => [...campaigns].sort((a, b) => new Date(b.fechaEnvio).getTime() - new Date(a.fechaEnvio).getTime()),
+    () => [...campaigns].sort((a, b) => {
+      const da = new Date(a.fechaEnvio ?? a.fechaProgramada ?? 0).getTime()
+      const db = new Date(b.fechaEnvio ?? b.fechaProgramada ?? 0).getTime()
+      return db - da
+    }),
     [campaigns]
   )
 
@@ -223,7 +230,7 @@ export default function AdminCampanasPage() {
                   <div className="flex items-center gap-3 text-[#555] text-[10px] tracking-[0.1em] uppercase">
                     <span>{camp.destinatariosCount} destinatarios</span>
                     <span>·</span>
-                    <span>{formatDateTime(camp.fechaEnvio)}</span>
+                    <span>{formatDateTime(camp.fechaEnvio ?? camp.fechaProgramada ?? new Date().toISOString())}</span>
                   </div>
                   <p className="text-[#555] text-xs font-light leading-relaxed">
                     {camp.mensaje.length > 80 ? camp.mensaje.slice(0, 80) + '...' : camp.mensaje}

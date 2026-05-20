@@ -12,7 +12,7 @@ type FilterKey = 'todos' | 'pendientes' | 'aceptados' | 'despachados' | 'entrega
 
 const FILTER_STATUSES: Record<FilterKey, OrderStatus[]> = {
   todos: [],
-  pendientes: ['borrador', 'enviado_wa', 'pendiente_revision', 'modificado'],
+  pendientes: ['borrador', 'pendiente_revision', 'modificado'],
   aceptados: ['aceptado'],
   despachados: ['despachado'],
   entregados: ['entregado'],

@@ -69,7 +69,6 @@ const ALL_STATUSES: { value: OrderStatus | 'all'; label: string }[] = [
   { value: 'rechazado', label: ORDER_STATUS_LABELS.rechazado },
   { value: 'cancelado', label: ORDER_STATUS_LABELS.cancelado },
   { value: 'borrador', label: ORDER_STATUS_LABELS.borrador },
-  { value: 'enviado_wa', label: ORDER_STATUS_LABELS.enviado_wa },
 ]
 
 interface OrderCardProps {

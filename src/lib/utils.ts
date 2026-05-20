@@ -77,7 +77,6 @@ export function formatOrderWhatsApp(
 // Status labels en español
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   borrador: 'Borrador',
-  enviado_wa: 'Enviado por WhatsApp',
   pendiente_revision: 'Pendiente de revisión',
   aceptado: 'Aceptado',
   modificado: 'Modificado',
@@ -89,7 +88,6 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   borrador: 'bg-zinc-800 text-zinc-400',
-  enviado_wa: 'bg-green-950 text-green-400',
   pendiente_revision: 'bg-yellow-950 text-yellow-400',
   aceptado: 'bg-emerald-950 text-emerald-400',
   modificado: 'bg-blue-950 text-blue-400',
@@ -98,3 +96,52 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   despachado: 'bg-purple-950 text-purple-400',
   entregado: 'bg-teal-950 text-teal-400',
 }
+
+// Reclamos status labels
+export const CLAIM_STATUS_LABELS = {
+  recibido: 'Recibido',
+  enviado_a_fabrica: 'Enviado a fábrica',
+  resuelto: 'Resuelto',
+} as const
+
+export const CLAIM_STATUS_COLORS = {
+  recibido: 'bg-yellow-950 text-yellow-400',
+  enviado_a_fabrica: 'bg-blue-950 text-blue-400',
+  resuelto: 'bg-emerald-950 text-emerald-400',
+} as const
+
+// Lead status labels
+export const LEAD_STATUS_LABELS = {
+  nuevo: 'Nuevo',
+  contactado: 'Contactado',
+  en_negociacion: 'En negociación',
+  convertido: 'Convertido',
+  perdido: 'Perdido',
+} as const
+
+export const LEAD_STATUS_COLORS = {
+  nuevo: 'bg-blue-950 text-blue-400',
+  contactado: 'bg-yellow-950 text-yellow-400',
+  en_negociacion: 'bg-orange-950 text-orange-400',
+  convertido: 'bg-emerald-950 text-emerald-400',
+  perdido: 'bg-red-950 text-red-400',
+} as const
+
+// Asset category labels
+export const ASSET_CATEGORY_LABELS = {
+  receta: 'Receta',
+  sol: 'Sol',
+  clip_on: 'Clip-On',
+  editorial: 'Editorial',
+  flyers: 'Flyers',
+  videos: 'Videos',
+  videos_ugc: 'Videos UGC',
+  educativo: 'Educativo',
+} as const
+
+export const ASSET_TYPE_LABELS = {
+  foto: 'Foto',
+  video: 'Video',
+  pdf: 'PDF',
+  zip: 'Pack ZIP',
+} as const
