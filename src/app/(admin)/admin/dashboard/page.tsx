@@ -24,6 +24,9 @@ type WidgetId =
   | 'sellers_perf'
   | 'recent_activity'
   | 'leads_crm'
+  | 'comisiones'
+  | 'captacion'
+  | 'inactivos'
 
 interface WidgetDef {
   id: WidgetId
@@ -42,9 +45,12 @@ const WIDGET_DEFS: WidgetDef[] = [
   { id: 'sellers_perf',    title: 'Rendimiento vendedores',  description: 'Comparativa de ventas entre vendedores',                     icon: Users,        cols: 'half'  },
   { id: 'recent_activity', title: 'Actividad reciente',      description: 'Últimos cambios de estado en pedidos',                      icon: Package,      cols: 'half'  },
   { id: 'leads_crm',       title: 'Leads / CRM',             description: 'Estado del pipeline de nuevas ópticas',                      icon: MessageSquare, cols: 'half'  },
+  { id: 'comisiones',      title: 'Comisiones por vendedor', description: 'Comisiones del mes calculadas por el ERP',                  icon: TrendingUp,   cols: 'half'  },
+  { id: 'captacion',       title: 'Métricas de captación',   description: 'Solicitudes web, leads, conversión',                         icon: Users,        cols: 'half'  },
+  { id: 'inactivos',       title: 'Clientes inactivos',      description: 'Ópticas sin compras en los últimos 90 días',                 icon: AlertTriangle, cols: 'half'  },
 ]
 
-const DEFAULT_ENABLED: WidgetId[] = ['kpis', 'sales_chart', 'orders_status', 'critical_stock', 'top_products', 'sellers_perf', 'recent_activity', 'leads_crm']
+const DEFAULT_ENABLED: WidgetId[] = ['kpis', 'sales_chart', 'orders_status', 'critical_stock', 'top_products', 'comisiones', 'captacion', 'inactivos', 'leads_crm']
 const LS_KEY = 'bianni_dashboard_widgets'
 
 function loadConfig(): WidgetId[] {
@@ -469,7 +475,105 @@ function renderWidget(id: WidgetId) {
     case 'sellers_perf':    return <SellersWidget />
     case 'recent_activity': return <RecentActivityWidget />
     case 'leads_crm':       return <LeadsCrmWidget />
+    case 'comisiones':      return <ComisionesWidget />
+    case 'captacion':       return <CaptacionWidget />
+    case 'inactivos':       return <InactivosWidget />
   }
+}
+
+// ─── Comisiones por vendedor ───────────────────────────────────────────────────
+function ComisionesWidget() {
+  const { commissions, sellers } = useDataStore()
+  const data = sellers.map((s) => {
+    const total = commissions.filter((c) => c.sellerId === s.id).reduce((sum, c) => sum + c.monto, 0)
+    const pendientes = commissions.filter((c) => c.sellerId === s.id && c.estado === 'pendiente').length
+    return { nombre: s.nombre.split(' ')[0], total, pendientes, sellerId: s.id }
+  })
+  return (
+    <WidgetCard title="Comisiones por vendedor">
+      <div className="space-y-2">
+        {data.map((d) => (
+          <div key={d.sellerId} className="flex items-center justify-between border-b border-[#1A1A1A] pb-2">
+            <div>
+              <p className="text-white text-sm font-light">{d.nombre}</p>
+              <p className="text-[9px] text-[#555] uppercase tracking-[0.1em]">{d.pendientes} pendiente{d.pendientes !== 1 ? 's' : ''}</p>
+            </div>
+            <p className="text-white text-sm font-light">{formatARS(d.total)}</p>
+          </div>
+        ))}
+      </div>
+      <p className="text-[9px] text-[#555] mt-3 tracking-wide">* Cálculo proviene del ERP</p>
+    </WidgetCard>
+  )
+}
+
+// ─── Métricas de captación ─────────────────────────────────────────────────────
+function CaptacionWidget() {
+  const { leads, representativeRequests, clients } = useDataStore()
+  const convertidos = leads.filter((l) => l.estado === 'convertido').length
+  const conversionRate = leads.length > 0 ? Math.round((convertidos / leads.length) * 100) : 0
+  const altasWeb = clients.filter((c) => c.origenAlta === 'web').length
+  return (
+    <WidgetCard title="Captación de ópticas">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">Solicitudes web</p>
+          <p className="text-3xl text-white font-light">{representativeRequests.length}</p>
+        </div>
+        <div>
+          <p className="text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">Leads totales</p>
+          <p className="text-3xl text-white font-light">{leads.length}</p>
+        </div>
+        <div>
+          <p className="text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">Ópticas activas</p>
+          <p className="text-3xl text-emerald-400 font-light">{clients.filter((c) => c.status === 'activa').length}</p>
+        </div>
+        <div>
+          <p className="text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">Conversión</p>
+          <p className="text-3xl text-white font-light">{conversionRate}%</p>
+        </div>
+      </div>
+      <div className="border-t border-[#1A1A1A] pt-2 mt-3">
+        <p className="text-[9px] text-[#555] tracking-[0.1em] uppercase">Altas por origen</p>
+        <div className="flex gap-2 text-xs mt-1">
+          <span className="text-emerald-300">{altasWeb} vía web</span>
+          <span className="text-[#555]">·</span>
+          <span className="text-blue-300">{clients.length - altasWeb} por vendedor</span>
+        </div>
+      </div>
+    </WidgetCard>
+  )
+}
+
+// ─── Clientes inactivos ────────────────────────────────────────────────────────
+function InactivosWidget() {
+  const { getInactiveClients, sellers } = useDataStore()
+  const inactives = getInactiveClients(90)
+  return (
+    <WidgetCard title="Clientes inactivos (>90d)">
+      {inactives.length === 0 ? (
+        <p className="text-[#555] text-xs text-center py-6">Sin clientes inactivos</p>
+      ) : (
+        <div className="space-y-2">
+          {inactives.slice(0, 5).map((c) => {
+            const seller = sellers.find((s) => s.id === c.sellerId)
+            const days = c.ultimaCompra
+              ? Math.floor((Date.now() - new Date(c.ultimaCompra).getTime()) / (1000 * 60 * 60 * 24))
+              : null
+            return (
+              <div key={c.id} className="flex items-center justify-between border-b border-[#1A1A1A] pb-2">
+                <div>
+                  <p className="text-white text-xs font-light">{c.nombre}</p>
+                  <p className="text-[9px] text-[#555] tracking-[0.1em]">{c.ciudad} · {seller?.nombre.split(' ')[0]}</p>
+                </div>
+                <p className="text-[10px] text-yellow-400">{days ? `${days}d` : 'Nunca'}</p>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </WidgetCard>
+  )
 }
 
 // ─── Config panel ──────────────────────────────────────────────────────────────

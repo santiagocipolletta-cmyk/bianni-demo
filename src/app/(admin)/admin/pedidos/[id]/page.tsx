@@ -187,13 +187,18 @@ export default function AdminPedidoDetailPage({
       picked: item.picked,
     }))
     updateOrderItems(order!.id, newItems)
-    updateOrderStatus(order!.id, 'modificado', userName, 'Admin modificó los ítems del pedido')
+    // Admin modifica + confirma directamente (sin re-aprobación de óptica)
+    updateOrderStatus(order!.id, 'modificado', userName, 'Admin modificó y confirmó directamente')
+    // Descontar stock al confirmar
+    newItems.forEach((it) => {
+      decrementStock(it.productId, it.cantidad, order!.id, userName)
+    })
     addNotification({
       userId: getNotifUserId(order!.clienteId),
       orderId: order!.id,
       tipo: 'estado_pedido',
-      titulo: `Pedido ${order!.codigo} modificado`,
-      mensaje: `Tu pedido ${order!.codigo} fue modificado por el equipo de Bianni. Revisá los cambios.`,
+      titulo: `Pedido ${order!.codigo} modificado y confirmado`,
+      mensaje: `Tu pedido ${order!.codigo} fue ajustado por el equipo de Bianni y confirmado. Ya está en preparación.`,
       leida: false,
     })
     setEditMode(false)

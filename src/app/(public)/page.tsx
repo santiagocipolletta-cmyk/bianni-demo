@@ -261,7 +261,8 @@ interface PublicCatalogProps {
 function PublicCatalogSection({ onLoginClick, selectedCat, onCategoryChange, sectionRef }: PublicCatalogProps) {
   const { products, categories } = useDataStore()
 
-  const activeProducts = products.filter((p) => p.active)
+  // LOOKBOOK público: solo destacados y novedad — NO el catálogo completo
+  const activeProducts = products.filter((p) => p.active && (p.destacado || p.novedad))
   const visible =
     selectedCat === ALL_CAT
       ? activeProducts
@@ -687,6 +688,59 @@ function Footer({ onLoginClick }: { onLoginClick: () => void }) {
   )
 }
 
+// ─── Map Section ───────────────────────────────────────────────────────────────
+
+function MapSection() {
+  const [zoneFilter, setZoneFilter] = useState('todas')
+  const zones = ['todas', 'CABA', 'Buenos Aires', 'Córdoba', 'Santa Fe', 'Mendoza', 'Tucumán']
+
+  return (
+    <section className="bg-black py-24 px-8 md:px-16 lg:px-24 border-t border-zinc-900">
+      <motion.div className="max-w-7xl mx-auto"
+        initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.8 }}>
+        <div className="text-center mb-12">
+          <p className="text-[10px] tracking-[0.35em] uppercase text-zinc-500 mb-3">Encontrá BIANNI</p>
+          <h2 className="font-display text-4xl md:text-5xl text-white font-light mb-3">
+            Mapa de ópticas
+          </h2>
+          <p className="text-zinc-400 text-sm max-w-md mx-auto">
+            Conocé las ópticas oficiales BIANNI más cercanas a tu zona.
+          </p>
+        </div>
+
+        {/* Zone selector */}
+        <div className="flex justify-center gap-0 mb-8 overflow-x-auto">
+          {zones.map((z) => (
+            <button key={z} onClick={() => setZoneFilter(z)} className={cn(
+              'flex-shrink-0 px-4 py-2 text-[10px] tracking-[0.2em] uppercase border transition-colors',
+              zoneFilter === z
+                ? 'border-white bg-white text-black'
+                : 'border-zinc-800 text-zinc-400 hover:border-white/40 hover:text-white'
+            )}>
+              {z}
+            </button>
+          ))}
+        </div>
+
+        {/* Mapa embed */}
+        <div className="border border-zinc-800 bg-zinc-950 aspect-[16/9] overflow-hidden relative">
+          <iframe
+            title="Mapa de ópticas BIANNI"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3284265.0568858264!2d-66.97619615!3d-34.6037398!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bccac630f04469%3A0x7e6bc233d9f5b3da!2sArgentina!5e0!3m2!1ses!2sar!4v1716000000000"
+            width="100%" height="100%" style={{ border: 0, filter: 'grayscale(80%) contrast(0.95)' }}
+            loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
+
+        <p className="text-center text-zinc-500 text-[10px] mt-4 tracking-[0.15em] uppercase">
+          {zoneFilter === 'todas' ? '8 ópticas oficiales en Argentina' : `Ópticas en ${zoneFilter}`}
+        </p>
+      </motion.div>
+    </section>
+  )
+}
+
 // ─── Home Page ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -739,6 +793,9 @@ export default function HomePage() {
 
       {/* 6 — Why BIANNI (white section) */}
       <BenefitsSection />
+
+      {/* 6.5 — Mapa de ópticas */}
+      <MapSection />
 
       {/* 7 — Join form */}
       <JoinFormSection />
