@@ -20,11 +20,15 @@ import {
   LogOut,
   Menu,
   X,
+  Inbox,
+  Users,
 } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/pedidos', label: 'Pedidos', icon: ClipboardList },
+  { href: '/admin/solicitudes', label: 'Alta Ópticas', icon: Inbox },
+  { href: '/admin/clientes', label: 'Ópticas', icon: Users },
   { href: '/admin/stock', label: 'Stock', icon: Package },
   { href: '/admin/reclamos', label: 'Reclamos', icon: AlertCircle },
   { href: '/admin/campanas', label: 'Campañas WA', icon: MessageSquare },

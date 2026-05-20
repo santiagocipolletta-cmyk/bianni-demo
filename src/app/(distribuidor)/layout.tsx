@@ -18,10 +18,12 @@ import {
   LogOut,
   Menu,
   X,
+  Sparkles,
 } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/catalogo', label: 'Catálogo', icon: Package },
+  { href: '/preventas', label: 'Preventa', icon: Sparkles },
   { href: '/pedidos', label: 'Mis Pedidos', icon: ShoppingCart },
   { href: '/cuenta', label: 'Cuenta Corriente', icon: CreditCard },
   { href: '/reclamos', label: 'Garantía', icon: MessageSquareWarning },

@@ -199,13 +199,24 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
                       </div>
                     </div>
 
-                    {/* Go to confirmation */}
-                    <button
-                      onClick={() => setConfirming(true)}
-                      className="w-full bg-white text-black text-[10px] tracking-[0.2em] uppercase py-3.5 font-medium hover:bg-zinc-100 transition-colors"
-                    >
-                      Continuar con el pedido →
-                    </button>
+                    {/* Bloqueo profile incompleto */}
+                    {client && !client.profileCompleto ? (
+                      <div className="border border-yellow-900 bg-yellow-950/30 p-3 space-y-2">
+                        <p className="text-[10px] tracking-[0.15em] uppercase text-yellow-200">Datos de facturación incompletos</p>
+                        <p className="text-[11px] text-yellow-100/80 leading-relaxed">Antes de pedir, completá tus datos de facturación y envío.</p>
+                        <a href="/completar-datos"
+                          className="block text-center w-full bg-yellow-500 text-black text-[10px] tracking-[0.2em] uppercase py-2.5 font-medium hover:bg-yellow-400 transition-colors">
+                          Completar datos
+                        </a>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirming(true)}
+                        className="w-full bg-white text-black text-[10px] tracking-[0.2em] uppercase py-3.5 font-medium hover:bg-zinc-100 transition-colors"
+                      >
+                        Continuar con el pedido →
+                      </button>
+                    )}
 
                     {/* WhatsApp contact links */}
                     <div className="pt-2 border-t border-[#1A1A1A]">
