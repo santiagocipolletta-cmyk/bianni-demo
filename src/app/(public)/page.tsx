@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { motion, useScroll, useTransform } from 'motion/react'
 import { Lock, Award, ShieldCheck, Star, Truck, ShoppingBag, Headphones } from 'lucide-react'
 import { toast } from 'sonner'
@@ -688,54 +689,84 @@ function Footer({ onLoginClick }: { onLoginClick: () => void }) {
   )
 }
 
-// ─── Map Section ───────────────────────────────────────────────────────────────
+// ─── Map CTA (links to /mapa) ──────────────────────────────────────────────────
 
-function MapSection() {
-  const [zoneFilter, setZoneFilter] = useState('todas')
-  const zones = ['todas', 'CABA', 'Buenos Aires', 'Córdoba', 'Santa Fe', 'Mendoza', 'Tucumán']
-
+function MapCtaSection() {
   return (
     <section className="bg-black py-24 px-8 md:px-16 lg:px-24 border-t border-zinc-900">
-      <motion.div className="max-w-7xl mx-auto"
-        initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.8 }}>
-        <div className="text-center mb-12">
-          <p className="text-[10px] tracking-[0.35em] uppercase text-zinc-500 mb-3">Encontrá BIANNI</p>
-          <h2 className="font-display text-4xl md:text-5xl text-white font-light mb-3">
-            Mapa de ópticas
-          </h2>
-          <p className="text-zinc-400 text-sm max-w-md mx-auto">
-            Conocé las ópticas oficiales BIANNI más cercanas a tu zona.
-          </p>
-        </div>
+      <motion.div
+        className="max-w-5xl mx-auto"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.8 }}
+      >
+        <Link
+          href="/mapa"
+          className="group relative block border border-zinc-800 bg-zinc-950 overflow-hidden hover:border-white/30 transition-colors"
+        >
+          {/* Background — silueta del mapa de Argentina muy sutil */}
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.4)_0%,_transparent_60%)]" />
 
-        {/* Zone selector */}
-        <div className="flex justify-center gap-0 mb-8 overflow-x-auto">
-          {zones.map((z) => (
-            <button key={z} onClick={() => setZoneFilter(z)} className={cn(
-              'flex-shrink-0 px-4 py-2 text-[10px] tracking-[0.2em] uppercase border transition-colors',
-              zoneFilter === z
-                ? 'border-white bg-white text-black'
-                : 'border-zinc-800 text-zinc-400 hover:border-white/40 hover:text-white'
-            )}>
-              {z}
-            </button>
-          ))}
-        </div>
+          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 px-8 md:px-12 py-12 md:py-16">
+            {/* Left — copy */}
+            <div className="flex flex-col justify-center">
+              <p className="text-[10px] tracking-[0.4em] uppercase text-zinc-500 mb-4">
+                Mapa de ópticas
+              </p>
+              <h2 className="font-display text-3xl md:text-5xl text-white font-light leading-[1.05] tracking-[-0.01em] mb-5">
+                Encontrá tu<br/>
+                <span className="text-zinc-500">óptica BIANNI</span>
+              </h2>
+              <p className="text-zinc-400 text-sm font-light leading-relaxed max-w-md mb-6">
+                Buscá por ciudad, provincia, dirección o código postal.
+                Te mostramos todas las ópticas oficiales BIANNI.
+              </p>
+              <div className="inline-flex items-center gap-3 text-white text-[11px] tracking-[0.25em] uppercase border border-white/40 group-hover:border-white group-hover:bg-white group-hover:text-black transition-all w-fit px-6 py-3">
+                Ver mapa completo
+                <span className="transition-transform group-hover:translate-x-1">→</span>
+              </div>
+            </div>
 
-        {/* Mapa embed */}
-        <div className="border border-zinc-800 bg-zinc-950 aspect-[16/9] overflow-hidden relative">
-          <iframe
-            title="Mapa de ópticas BIANNI"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3284265.0568858264!2d-66.97619615!3d-34.6037398!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bccac630f04469%3A0x7e6bc233d9f5b3da!2sArgentina!5e0!3m2!1ses!2sar!4v1716000000000"
-            width="100%" height="100%" style={{ border: 0, filter: 'grayscale(80%) contrast(0.95)' }}
-            loading="lazy" referrerPolicy="no-referrer-when-downgrade"
-          />
-        </div>
-
-        <p className="text-center text-zinc-500 text-[10px] mt-4 tracking-[0.15em] uppercase">
-          {zoneFilter === 'todas' ? '8 ópticas oficiales en Argentina' : `Ópticas en ${zoneFilter}`}
-        </p>
+            {/* Right — visual placeholder */}
+            <div className="relative aspect-square md:aspect-auto md:min-h-[280px] border border-zinc-800 bg-black/40 overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(16,185,129,0.08)_0%,_transparent_60%)]" />
+              {/* Pins decorativos */}
+              <div className="relative w-full h-full">
+                {[
+                  { top: '20%', left: '38%', size: 'lg', label: 'BUENOS AIRES' },
+                  { top: '32%', left: '32%', size: 'sm', label: 'CÓRDOBA' },
+                  { top: '38%', left: '40%', size: 'sm', label: 'ROSARIO' },
+                  { top: '48%', left: '20%', size: 'sm', label: 'MENDOZA' },
+                  { top: '18%', left: '52%', size: 'sm', label: 'TUCUMÁN' },
+                  { top: '68%', left: '24%', size: 'sm', label: 'BARILOCHE' },
+                ].map((pin, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute"
+                    style={{ top: pin.top, left: pin.left }}
+                    initial={{ opacity: 0, scale: 0 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 + i * 0.08, duration: 0.4, ease: 'easeOut' }}
+                  >
+                    <div className="relative flex flex-col items-center">
+                      <div className={`rounded-full bg-white shadow-[0_0_20px_rgba(255,255,255,0.5)] ${
+                        pin.size === 'lg' ? 'h-2 w-2' : 'h-1.5 w-1.5'
+                      }`} />
+                      <div className={`absolute top-2 mt-0.5 rounded-full bg-white/30 animate-ping ${
+                        pin.size === 'lg' ? 'h-2 w-2' : 'h-1.5 w-1.5'
+                      }`} />
+                    </div>
+                  </motion.div>
+                ))}
+                <p className="absolute bottom-4 right-4 text-[9px] tracking-[0.25em] uppercase text-zinc-600">
+                  Argentina
+                </p>
+              </div>
+            </div>
+          </div>
+        </Link>
       </motion.div>
     </section>
   )
@@ -794,8 +825,8 @@ export default function HomePage() {
       {/* 6 — Why BIANNI (white section) */}
       <BenefitsSection />
 
-      {/* 6.5 — Mapa de ópticas */}
-      <MapSection />
+      {/* 6.5 — CTA Mapa de ópticas (lleva a /mapa) */}
+      <MapCtaSection />
 
       {/* 7 — Join form */}
       <JoinFormSection />
