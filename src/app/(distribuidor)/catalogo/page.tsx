@@ -411,20 +411,17 @@ export default function CatalogoPage() {
                     {product.description}
                   </p>
 
-                  {/* Sustitutos cuando está sin stock */}
+                  {/* Sin stock + tiene sustitutos → CTA al modal */}
                   {isOutOfStock && substitutes.length > 0 && (
-                    <div className="border border-[#2A2A2A] bg-[#0A0A0A] p-2 mb-3">
-                      <p className="text-[8px] tracking-[0.2em] uppercase text-yellow-500 mb-1.5">Sustituto sugerido</p>
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-[10px] text-white truncate">{substitutes[0].name}</p>
-                        <button
-                          onClick={() => addItem(substitutes[0].id, getProductPrice(substitutes[0].id, priceListId))}
-                          className="text-[9px] tracking-[0.1em] uppercase text-emerald-400 hover:text-emerald-300"
-                        >
-                          Agregar →
-                        </button>
-                      </div>
-                    </div>
+                    <button
+                      onClick={() => setDetailProduct(product)}
+                      className="border border-yellow-900 bg-yellow-950/20 hover:bg-yellow-950/40 p-2 mb-3 flex items-center justify-between gap-2 text-left transition-colors"
+                    >
+                      <p className="text-[10px] tracking-[0.15em] uppercase text-yellow-400">
+                        Ver {substitutes.length} alternativa{substitutes.length !== 1 ? 's' : ''}
+                      </p>
+                      <span className="text-yellow-400 text-xs">→</span>
+                    </button>
                   )}
 
                   {/* Precio + Add */}
@@ -491,12 +488,13 @@ export default function CatalogoPage() {
 
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} products={products} />
 
-      {/* Modal detalle de producto */}
+      {/* Modal detalle de producto — onProductSwap permite navegar entre sustitutos sin cerrar */}
       <ProductDetailModal
         product={detailProduct}
         open={!!detailProduct}
         onClose={() => setDetailProduct(null)}
         priceListId={priceListId}
+        onProductSwap={(p) => setDetailProduct(p)}
       />
     </div>
   )
