@@ -43,10 +43,23 @@ function PublicNav({ onLoginClick }: { onLoginClick: () => void }) {
       }`}
     >
       <Logo variant="wordmark" className="h-7" />
-      <div className="flex items-center gap-3 sm:gap-5">
+      <div className="flex items-center gap-3 md:gap-6">
+        {/* Links públicos — solo desktop */}
+        <Link
+          href="/coleccion"
+          className="hidden md:inline-block text-white/70 hover:text-white text-[10px] tracking-[0.25em] uppercase transition-colors"
+        >
+          Colección
+        </Link>
+        <Link
+          href="/beneficios"
+          className="hidden md:inline-block text-white/70 hover:text-white text-[10px] tracking-[0.25em] uppercase transition-colors"
+        >
+          Beneficios
+        </Link>
         <Link
           href="/sumate"
-          className="hidden sm:inline-block text-white/70 hover:text-white text-[10px] tracking-[0.2em] uppercase transition-colors"
+          className="hidden sm:inline-block text-white/70 hover:text-white text-[10px] tracking-[0.25em] uppercase transition-colors"
         >
           Sumate
         </Link>

@@ -22,11 +22,13 @@ import {
   X,
   Inbox,
   Users,
+  Wallet,
 } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/pedidos', label: 'Pedidos', icon: ClipboardList },
+  { href: '/admin/cobranzas', label: 'Cobranzas', icon: Wallet },
   { href: '/admin/solicitudes', label: 'Alta Ópticas', icon: Inbox },
   { href: '/admin/representantes', label: 'Representantes', icon: UserPlus },
   { href: '/admin/clientes', label: 'Ópticas', icon: Users },
