@@ -24,7 +24,7 @@ const KANBAN_COLUMNS: {
 }[] = [
   {
     status: 'pendiente_revision',
-    label: 'Pendientes',
+    label: 'Solicitudes pendientes',
     headerColor: 'text-yellow-400',
     borderColor: 'border-yellow-500',
     badgeColor: 'bg-yellow-500',

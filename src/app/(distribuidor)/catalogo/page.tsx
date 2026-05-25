@@ -9,13 +9,16 @@ import { useAuthStore } from '@/stores/auth-store'
 import { useDataStore } from '@/stores/data-store'
 import { useCartStore } from '@/stores/cart-store'
 import { CartDrawer } from '@/components/cart/CartDrawer'
+import { ProductDetailModal } from '@/components/catalog/ProductDetailModal'
 import { formatARS, cn } from '@/lib/utils'
+import type { Product } from '@/types'
 
 const ALL_CAT = 'all'
 
 export default function CatalogoPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CAT)
   const [cartOpen, setCartOpen] = useState(false)
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null)
 
   const { user } = useAuthStore()
   const { products, categories, clients, getProductPrice, getClientPriceList,
@@ -130,8 +133,13 @@ export default function CatalogoPage() {
                 animate={{ opacity: isOutOfStock ? 0.7 : 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.04, ease: 'easeOut' }}
               >
-                {/* Image */}
-                <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden">
+                {/* Image — clickeable abre detalle */}
+                <button
+                  type="button"
+                  onClick={() => setDetailProduct(product)}
+                  className="relative aspect-[4/3] bg-stone-100 overflow-hidden cursor-pointer block group"
+                  aria-label={`Ver detalle de ${product.name}`}
+                >
                   {product.badge && (
                     <span className="absolute top-3 left-3 z-10 bg-black text-white text-[8px] tracking-[0.2em] uppercase px-2 py-1">
                       {product.badge}
@@ -148,17 +156,23 @@ export default function CatalogoPage() {
                       Últimas {available}
                     </span>
                   )}
+                  {/* Hover hint para abrir detalle */}
+                  <div className="absolute inset-0 z-10 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <span className="text-white text-[10px] tracking-[0.25em] uppercase border border-white/60 px-3 py-1.5 bg-black/40 backdrop-blur-sm">
+                      Ver detalle
+                    </span>
+                  </div>
                   <Image
                     src={product.imageUrl}
                     alt={product.name}
                     fill
                     sizes="(max-width: 1280px) 50vw, 33vw"
                     className={cn(
-                      'object-cover transition-transform duration-500 hover:scale-105',
+                      'object-cover transition-transform duration-500 group-hover:scale-105',
                       isOutOfStock && 'grayscale'
                     )}
                   />
-                </div>
+                </button>
 
                 {/* Body */}
                 <div className="flex flex-col flex-1 p-4 border-t border-[#2A2A2A]">
@@ -239,6 +253,14 @@ export default function CatalogoPage() {
       </div>
 
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} products={products} />
+
+      {/* Modal detalle de producto */}
+      <ProductDetailModal
+        product={detailProduct}
+        open={!!detailProduct}
+        onClose={() => setDetailProduct(null)}
+        priceListId={priceListId}
+      />
     </div>
   )
 }

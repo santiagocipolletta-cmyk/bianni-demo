@@ -38,7 +38,7 @@ export default function AdminPedidoDetailPage({
 }) {
   const { id } = React.use(params)
 
-  const { getOrderWithDetails, updateOrderStatus, updateOrderItems, decrementStock, addNotification, products } =
+  const { getOrderWithDetails, updateOrderStatus, updateOrderItems, decrementStock, releaseStock, addNotification, products } =
     useDataStore()
   const { user } = useAuthStore()
 
@@ -165,6 +165,10 @@ export default function AdminPedidoDetailPage({
   function handleRechazar() {
     if (!motivoRechazo.trim()) return
     updateOrderStatus(order!.id, 'rechazado', userName, motivoRechazo.trim())
+    // Liberar stock congelado al rechazar
+    order!.items.forEach((it) => {
+      releaseStock(it.productId, it.cantidad, order!.id, userName)
+    })
     addNotification({
       userId: getNotifUserId(order!.clienteId),
       orderId: order!.id,
