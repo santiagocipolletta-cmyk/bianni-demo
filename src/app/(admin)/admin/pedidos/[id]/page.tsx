@@ -14,7 +14,7 @@ import {
   ORDER_STATUS_COLORS,
 } from '@/lib/utils'
 import type { OrderItem } from '@/types'
-import { ArrowLeft, Check, Edit2, X, Truck, PackageCheck, CheckCircle2, Circle } from 'lucide-react'
+import { ArrowLeft, Check, Edit2, X, Truck, PackageCheck, CheckCircle2, Circle, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
 // clienteId → userId map for notifications (demo)
@@ -532,6 +532,18 @@ export default function AdminPedidoDetailPage({
                   <Truck size={14} />
                   Marcar despachado
                 </button>
+              )}
+
+              {/* Remito — disponible desde aceptado en adelante */}
+              {['aceptado', 'despachado', 'entregado'].includes(order.estado) && (
+                <Link
+                  href={`/admin/pedidos/${order.id}/remito`}
+                  target="_blank"
+                  className="w-full flex items-center justify-center gap-2 border border-[#2A2A2A] text-[#A0A0A0] hover:border-white hover:text-white text-xs tracking-[0.15em] uppercase px-4 py-3 transition-colors"
+                >
+                  <FileText size={14} />
+                  Ver / imprimir remito
+                </Link>
               )}
 
               {/* despachado */}

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Check, ShoppingBag, Trash2 } from 'lucide-react'
+import { Check, ShoppingBag, Trash2, Search, AlertTriangle, Info, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { useDataStore } from '@/stores/data-store'
@@ -26,6 +26,8 @@ function PedidoNuevoContent() {
     priceLists,
     getProductPrice,
     getClientPriceList,
+    getClientPendingOrders,
+    getClientOpenClaims,
     addOrder,
   } = useDataStore()
 
@@ -34,9 +36,20 @@ function PedidoNuevoContent() {
 
   const [selectedClientId, setSelectedClientId] = useState<string>('')
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CAT)
+  const [clientQuery, setClientQuery] = useState('')
 
   const sellerId = user?.sellerId
   const myClients = clients.filter((c) => c.sellerId === sellerId)
+
+  const filteredClients = useMemo(() => {
+    const q = clientQuery.trim().toLowerCase()
+    if (!q) return myClients
+    return myClients.filter((c) =>
+      c.nombre.toLowerCase().includes(q) ||
+      (c.ciudad ?? '').toLowerCase().includes(q) ||
+      (c.provincia ?? '').toLowerCase().includes(q)
+    )
+  }, [myClients, clientQuery])
 
   // Pre-fill from URL query param
   useEffect(() => {
@@ -153,25 +166,44 @@ function PedidoNuevoContent() {
             )}
           </div>
 
-          {/* Client selector */}
-          <div className="flex-shrink-0">
-            <select
-              value={selectedClientId}
-              onChange={(e) => setSelectedClientId(e.target.value)}
-              className="bg-[#111] border border-[#2A2A2A] text-white text-xs tracking-[0.1em] px-3 py-2 focus:outline-none focus:border-white transition-colors min-w-[200px]"
+          {/* Mostrar quién está seleccionado y permitir cambiar */}
+          {selectedClient && (
+            <button
+              type="button"
+              onClick={() => setSelectedClientId('')}
+              className="flex-shrink-0 flex items-center gap-2 border border-[#2A2A2A] text-[#A0A0A0] text-[10px] tracking-[0.15em] uppercase px-3 py-2 hover:border-white hover:text-white transition-colors"
             >
-              <option value="">— Seleccionar cliente —</option>
-              {myClients.map((c) => {
-                const pl = priceLists.find((p) => p.id === c.priceListId)
-                return (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre} ({pl?.name ?? c.priceListId})
-                  </option>
-                )
-              })}
-            </select>
-          </div>
+              <X size={11} /> Cambiar cliente
+            </button>
+          )}
         </div>
+
+        {/* Avisos cuando hay cliente seleccionado */}
+        {selectedClient && (() => {
+          const pending = getClientPendingOrders(selectedClient.id)
+          const openClaims = getClientOpenClaims(selectedClient.id)
+          if (pending.length === 0 && openClaims.length === 0) return null
+          return (
+            <div className="mt-3 space-y-1.5">
+              {openClaims.length > 0 && (
+                <div className="flex items-start gap-2 border border-yellow-800 bg-yellow-950/40 px-3 py-2 text-xs">
+                  <AlertTriangle size={12} className="text-yellow-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-yellow-100">
+                    Esta óptica tiene <span className="font-medium text-white">{openClaims.length} reclamo{openClaims.length !== 1 ? 's' : ''} sin resolver</span>. Recordá ofrecer una bonificación o aclararlo en observaciones del pedido.
+                  </p>
+                </div>
+              )}
+              {pending.length > 0 && (
+                <div className="flex items-start gap-2 border border-[#2A2A2A] bg-[#0A0A0A] px-3 py-2 text-xs">
+                  <Info size={12} className="text-[#888] mt-0.5 flex-shrink-0" />
+                  <p className="text-[#A0A0A0]">
+                    Esta óptica ya tiene <span className="font-medium text-white">{pending.length} solicitud{pending.length !== 1 ? 'es' : ''} pendiente{pending.length !== 1 ? 's' : ''}</span> de revisión del admin.
+                  </p>
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Category tabs — only show when client is selected */}
         {selectedClientId && (
@@ -195,10 +227,64 @@ function PedidoNuevoContent() {
       </div>
 
       {!selectedClientId ? (
-        <div className="flex items-center justify-center py-24">
-          <p className="text-[#555] text-xs tracking-[0.2em] uppercase">
-            Seleccioná un cliente para ver el catálogo
+        <div className="px-4 lg:px-8 py-10 max-w-2xl mx-auto">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-[#555] mb-4">
+            Elegí una óptica para armar el pedido
           </p>
+          {/* Buscador */}
+          <div className="relative mb-3">
+            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#555]" />
+            <input
+              type="text"
+              autoFocus
+              value={clientQuery}
+              onChange={(e) => setClientQuery(e.target.value)}
+              placeholder="Buscar por nombre, ciudad o provincia..."
+              className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-sm pl-11 pr-4 py-3 focus:outline-none focus:border-white/40 transition-colors"
+            />
+          </div>
+          <p className="text-[10px] text-[#555] uppercase tracking-[0.2em] mb-2">
+            {filteredClients.length} óptica{filteredClients.length !== 1 ? 's' : ''}
+          </p>
+          {/* Lista de clientes */}
+          <div className="border border-[#2A2A2A] divide-y divide-[#1A1A1A]">
+            {filteredClients.length === 0 ? (
+              <p className="text-center text-[#555] text-xs py-6">Sin resultados</p>
+            ) : (
+              filteredClients.map((c) => {
+                const pl = priceLists.find((p) => p.id === c.priceListId)
+                const pending = getClientPendingOrders(c.id).length
+                const claims = getClientOpenClaims(c.id).length
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedClientId(c.id)}
+                    className="w-full text-left px-4 py-3.5 hover:bg-[#0A0A0A] transition-colors flex items-center justify-between gap-3 group"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm text-white font-light truncate">{c.nombre}</p>
+                      <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mt-0.5">
+                        {c.ciudad}{c.provincia ? ` · ${c.provincia}` : ''} · Lista {pl?.name ?? c.priceListId}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {claims > 0 && (
+                        <span className="text-[9px] tracking-[0.15em] uppercase bg-yellow-950 text-yellow-400 px-2 py-0.5">
+                          {claims} reclamo{claims !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {pending > 0 && (
+                        <span className="text-[9px] tracking-[0.15em] uppercase bg-[#1A1A1A] text-[#A0A0A0] px-2 py-0.5">
+                          {pending} pendiente{pending !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      <span className="text-[#555] group-hover:text-white text-sm">→</span>
+                    </div>
+                  </button>
+                )
+              })
+            )}
+          </div>
         </div>
       ) : (
         <div className="flex flex-col lg:flex-row">

@@ -363,7 +363,7 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
                   </div>
 
                   {/* Datos envío precargados */}
-                  {tipoEntrega === 'envio' && (
+                  {tipoEntrega === 'envio' ? (
                     <div className="border border-[#2A2A2A] p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <p className="text-[9px] tracking-[0.25em] uppercase text-[#555]">Dirección de envío</p>
@@ -384,10 +384,14 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
                         </div>
                       ) : (
                         <p className="text-[11px] text-white leading-relaxed">
-                          {direccion}<br/>
-                          <span className="text-[#A0A0A0]">{ciudad}, {provincia} — {codigoPostal}</span>
+                          {direccion || <span className="text-[#666] italic">Sin dirección cargada</span>}
+                          {direccion && (<><br/><span className="text-[#A0A0A0]">{ciudad}, {provincia} — {codigoPostal}</span></>)}
                         </p>
                       )}
+                    </div>
+                  ) : (
+                    <div className="border border-[#2A2A2A] bg-[#0A0A0A] p-3 text-[11px] text-[#A0A0A0] leading-relaxed">
+                      Tu vendedor se va a contactar para coordinar la entrega (presencial, retiro o transportadora a definir).
                     </div>
                   )}
 
