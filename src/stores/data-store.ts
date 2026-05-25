@@ -128,6 +128,7 @@ interface DataState {
   addClient: (client: Client) => void
 
   // Representative requests
+  addRepresentativeRequest: (req: Omit<RepresentativeRequest, 'id' | 'createdAt' | 'estado'>) => void
   approveRepresentativeRequest: (requestId: string, sellerId: string, resueltaPor: string) => void
   rejectRepresentativeRequest: (requestId: string, motivo: string, resueltaPor: string) => void
 
@@ -569,6 +570,18 @@ export const useDataStore = create<DataState>()(
       },
 
       // ── Representative requests ──────────────────────────────────────────
+      addRepresentativeRequest: (req) => {
+        const newReq: RepresentativeRequest = {
+          ...req,
+          id: generateId('rr'),
+          estado: 'pendiente',
+          createdAt: new Date().toISOString(),
+        }
+        set((state) => ({
+          representativeRequests: [newReq, ...state.representativeRequests],
+        }))
+      },
+
       approveRepresentativeRequest: (requestId, sellerId, resueltaPor) => {
         set((state) => ({
           representativeRequests: state.representativeRequests.map((r) =>

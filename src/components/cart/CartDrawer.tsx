@@ -92,6 +92,10 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
       toast.error('Error: no se identificó el cliente')
       return
     }
+    if (!client.profileCompleto) {
+      toast.error('Completá tus datos antes de pedir — andá a /cuenta/completar')
+      return
+    }
     if (tipoEntrega === 'envio' && (!direccion || !ciudad || !codigoPostal)) {
       toast.error('Completá los datos de envío')
       return
@@ -279,7 +283,7 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
                     {client && !client.profileCompleto ? (
                       <div className="border border-yellow-900 bg-yellow-950/30 p-3 space-y-2">
                         <p className="text-[10px] tracking-[0.15em] uppercase text-yellow-200">Datos de facturación incompletos</p>
-                        <a href="/completar-datos" className="block text-center w-full bg-yellow-500 text-black text-[10px] tracking-[0.2em] uppercase py-2.5 font-medium hover:bg-yellow-400">
+                        <a href="/cuenta/completar" className="block text-center w-full bg-yellow-500 text-black text-[10px] tracking-[0.2em] uppercase py-2.5 font-medium hover:bg-yellow-400">
                           Completar datos
                         </a>
                       </div>
@@ -453,8 +457,15 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
                 </div>
 
                 <div className="border-t border-[#2A2A2A] px-6 py-4 flex-shrink-0 space-y-2">
+                  {client && !client.profileCompleto && (
+                    <a href="/cuenta/completar"
+                      className="block text-center w-full bg-yellow-500 text-black text-[10px] tracking-[0.2em] uppercase py-2.5 font-medium hover:bg-yellow-400">
+                      Completá tus datos para poder pedir →
+                    </a>
+                  )}
                   <button onClick={handleConfirm}
-                    className="w-full bg-white text-black text-[10px] tracking-[0.2em] uppercase py-3.5 font-medium hover:bg-zinc-100 transition-colors">
+                    disabled={!client?.profileCompleto}
+                    className="w-full bg-white text-black text-[10px] tracking-[0.2em] uppercase py-3.5 font-medium hover:bg-zinc-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white">
                     Confirmar solicitud + WhatsApp
                   </button>
                   <button onClick={() => setConfirming(false)}

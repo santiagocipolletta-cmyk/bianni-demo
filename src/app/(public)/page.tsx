@@ -43,18 +43,32 @@ function PublicNav({ onLoginClick }: { onLoginClick: () => void }) {
       }`}
     >
       <Logo variant="wordmark" className="h-7" />
-      <button
-        onClick={onLoginClick}
-        className="btn-bianni-outline text-[10px] hidden sm:block"
-      >
-        Ingresar a tu cuenta
-      </button>
-      <button
-        onClick={onLoginClick}
-        className="sm:hidden text-white text-[10px] tracking-[0.2em] uppercase border border-white/50 px-4 py-2 hover:bg-white hover:text-black transition-colors"
-      >
-        Ingresar
-      </button>
+      <div className="flex items-center gap-3 sm:gap-5">
+        <Link
+          href="/sumate"
+          className="hidden sm:inline-block text-white/70 hover:text-white text-[10px] tracking-[0.2em] uppercase transition-colors"
+        >
+          Sumate
+        </Link>
+        <button
+          onClick={onLoginClick}
+          className="btn-bianni-outline text-[10px] hidden sm:block"
+        >
+          Ingresar a tu cuenta
+        </button>
+        <Link
+          href="/sumate"
+          className="sm:hidden text-white/70 text-[10px] tracking-[0.2em] uppercase"
+        >
+          Sumate
+        </Link>
+        <button
+          onClick={onLoginClick}
+          className="sm:hidden text-white text-[10px] tracking-[0.2em] uppercase border border-white/50 px-4 py-2 hover:bg-white hover:text-black transition-colors"
+        >
+          Ingresar
+        </button>
+      </div>
     </nav>
   )
 }
@@ -553,7 +567,7 @@ function JoinFormSection() {
             ))}
           </div>
 
-          <div className="mt-8 flex items-center justify-between">
+          <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <p className="text-zinc-700 text-[10px] tracking-wide">
               * campos obligatorios
             </p>
@@ -564,6 +578,16 @@ function JoinFormSection() {
             >
               {submitting ? 'Enviando...' : 'Enviar solicitud'}
             </button>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-white/5 text-center">
+            <Link
+              href="/sumate"
+              className="inline-flex items-center gap-2 text-zinc-500 hover:text-white text-[10px] tracking-[0.2em] uppercase transition-colors"
+            >
+              Quiero ser representante BIANNI
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </motion.form>
       </div>
@@ -621,16 +645,26 @@ function ExclusiveAccessSection({ onLoginClick }: { onLoginClick: () => void }) 
           Accedé a precios mayoristas, catálogo completo y gestión de pedidos en tiempo real.
         </motion.p>
 
-        <motion.button
-          onClick={onLoginClick}
-          className="btn-bianni-outline py-4 px-12 text-[11px]"
+        <motion.div
+          className="flex flex-col sm:flex-row gap-3 justify-center items-center"
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.45 }}
         >
-          Ingresar a tu cuenta
-        </motion.button>
+          <button
+            onClick={onLoginClick}
+            className="btn-bianni-outline py-4 px-12 text-[11px]"
+          >
+            Ingresar a tu cuenta
+          </button>
+          <Link
+            href="/sumate"
+            className="text-white/60 hover:text-white text-[11px] tracking-[0.2em] uppercase py-4 px-6 transition-colors"
+          >
+            Quiero ser representante →
+          </Link>
+        </motion.div>
 
         <div className="flex items-center gap-6 mt-16 justify-center opacity-20">
           <div className="flex-1 max-w-24 h-px bg-white" />

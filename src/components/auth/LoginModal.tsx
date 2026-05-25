@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth-store'
+import { useDataStore } from '@/stores/data-store'
 import { Logo } from '@/components/brand/Logo'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
+import { toast } from 'sonner'
 import type { UserRole } from '@/types'
 import * as Dialog from '@radix-ui/react-dialog'
 
@@ -20,15 +22,23 @@ interface LoginModalProps {
   onOpenChange: (open: boolean) => void
 }
 
+type View = 'login' | 'recovery'
+
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const router = useRouter()
-  const { login } = useAuthStore()
+  const { login, logout } = useAuthStore()
+  const clients = useDataStore((s) => s.clients)
 
+  const [view, setView] = useState<View>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Recovery view
+  const [recoveryEmail, setRecoveryEmail] = useState('')
+  const [recoverying, setRecoverying] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -39,30 +49,70 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
     await new Promise((r) => setTimeout(r, 600))
 
     const result = login(email, password)
-    setLoading(false)
 
     if (!result.success) {
+      setLoading(false)
       setError(result.error ?? 'Error al ingresar.')
       return
     }
 
-    // Get role from store after login
+    // Get user from store after login
     const { user } = useAuthStore.getState()
     if (user) {
+      // Si es distribuidor con clientId, verificar status del cliente
+      if (user.clientId) {
+        const client = clients.find((c) => c.id === user.clientId)
+        if (client && client.status === 'suspendida') {
+          // Revertir login
+          logout()
+          setLoading(false)
+          setError('Tu cuenta está suspendida. Contactá a BIANNI.')
+          return
+        }
+      }
+      setLoading(false)
       onOpenChange(false)
       router.push(ROLE_REDIRECTS[user.role])
+    } else {
+      setLoading(false)
     }
   }
 
+  async function handleRecovery(e: React.FormEvent) {
+    e.preventDefault()
+    if (!recoveryEmail.trim()) {
+      toast.error('Ingresá tu email')
+      return
+    }
+    setRecoverying(true)
+    await new Promise((r) => setTimeout(r, 700))
+    setRecoverying(false)
+    toast.success('Te enviamos un mail con instrucciones (mock)')
+    setRecoveryEmail('')
+    setView('login')
+  }
+
+  function handleOpenChange(v: boolean) {
+    if (!v) {
+      // Reset al cerrar
+      setView('login')
+      setError(null)
+      setRecoveryEmail('')
+    }
+    onOpenChange(v)
+  }
+
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         {/* Overlay */}
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
 
         {/* Content */}
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-[440px] -translate-x-1/2 -translate-y-1/2 bg-[#0A0A0A] border border-[#2A2A2A] p-10 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]">
-          <Dialog.Title className="sr-only">Ingresar a tu cuenta</Dialog.Title>
+          <Dialog.Title className="sr-only">
+            {view === 'login' ? 'Ingresar a tu cuenta' : 'Recuperar contraseña'}
+          </Dialog.Title>
 
           {/* Close button */}
           <Dialog.Close className="absolute right-5 top-5 text-[#555] hover:text-white transition-colors">
@@ -76,85 +126,147 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
             <Logo variant="full" className="h-12" />
           </div>
 
-          {/* Heading */}
-          <div className="text-center mb-8">
-            <h2 className="text-white text-xl font-light tracking-[0.15em] uppercase mb-2">
-              Ingresar a tu cuenta
-            </h2>
-            <p className="text-[#555] text-xs tracking-wide leading-relaxed">
-              Ingresá con tus credenciales para acceder al catálogo exclusivo.
-            </p>
-          </div>
+          {view === 'login' ? (
+            <>
+              {/* Heading */}
+              <div className="text-center mb-8">
+                <h2 className="text-white text-xl font-light tracking-[0.15em] uppercase mb-2">
+                  Ingresar a tu cuenta
+                </h2>
+                <p className="text-[#555] text-xs tracking-wide leading-relaxed">
+                  Ingresá con tus credenciales para acceder al catálogo exclusivo.
+                </p>
+              </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
-            <div className="space-y-2">
-              <label className="block text-[10px] tracking-[0.2em] uppercase text-[#888] font-medium">
-                Correo electrónico
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="tu@email.com"
-                className="w-full bg-[#111] border border-[#2A2A2A] text-white placeholder-[#444] px-4 py-3 text-sm outline-none focus:border-[#555] transition-colors"
-              />
-            </div>
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Email */}
+                <div className="space-y-2">
+                  <label className="block text-[10px] tracking-[0.2em] uppercase text-[#888] font-medium">
+                    Correo electrónico
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="tu@email.com"
+                    className="w-full bg-[#111] border border-[#2A2A2A] text-white placeholder-[#444] px-4 py-3 text-sm outline-none focus:border-[#555] transition-colors"
+                  />
+                </div>
 
-            {/* Password */}
-            <div className="space-y-2">
-              <label className="block text-[10px] tracking-[0.2em] uppercase text-[#888] font-medium">
-                Contraseña
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full bg-[#111] border border-[#2A2A2A] text-white placeholder-[#444] px-4 py-3 text-sm outline-none focus:border-[#555] transition-colors pr-12"
-                />
+                {/* Password */}
+                <div className="space-y-2">
+                  <label className="block text-[10px] tracking-[0.2em] uppercase text-[#888] font-medium">
+                    Contraseña
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      placeholder="••••••••"
+                      className="w-full bg-[#111] border border-[#2A2A2A] text-white placeholder-[#444] px-4 py-3 text-sm outline-none focus:border-[#555] transition-colors pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#444] hover:text-[#888] transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Error */}
+                {error && (
+                  <p className="text-[#DC2626] text-xs tracking-wide text-center border border-[#DC2626]/20 bg-[#DC2626]/5 py-2 px-4">
+                    {error}
+                  </p>
+                )}
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-white text-black text-xs font-medium tracking-[0.2em] uppercase py-4 hover:bg-[#e0e0e0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+                >
+                  {loading && <Loader2 size={14} className="animate-spin" />}
+                  {loading ? 'Ingresando...' : 'Ingresar'}
+                </button>
+
+                {/* Forgot password link */}
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#444] hover:text-[#888] transition-colors"
+                  onClick={() => {
+                    setView('recovery')
+                    setError(null)
+                  }}
+                  className="w-full text-center text-[10px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors pt-1"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  ¿Olvidaste tu contraseña?
                 </button>
-              </div>
-            </div>
+              </form>
 
-            {/* Error */}
-            {error && (
-              <p className="text-[#DC2626] text-xs tracking-wide text-center border border-[#DC2626]/20 bg-[#DC2626]/5 py-2 px-4">
-                {error}
+              {/* Footer */}
+              <p className="text-center text-[#444] text-xs mt-8 tracking-wide">
+                ¿No tenés acceso aún?{' '}
+                <a
+                  href="mailto:contacto@bianni.com"
+                  className="text-[#888] hover:text-white transition-colors underline underline-offset-2"
+                >
+                  Contactá a Bianni
+                </a>
               </p>
-            )}
+            </>
+          ) : (
+            <>
+              {/* Recovery heading */}
+              <div className="text-center mb-8">
+                <h2 className="text-white text-xl font-light tracking-[0.15em] uppercase mb-2">
+                  Recuperar contraseña
+                </h2>
+                <p className="text-[#555] text-xs tracking-wide leading-relaxed">
+                  Ingresá tu email y te enviamos instrucciones para recuperarla.
+                </p>
+              </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-white text-black text-xs font-medium tracking-[0.2em] uppercase py-4 hover:bg-[#e0e0e0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
-            >
-              {loading && <Loader2 size={14} className="animate-spin" />}
-              {loading ? 'Ingresando...' : 'Ingresar'}
-            </button>
-          </form>
+              <form onSubmit={handleRecovery} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="block text-[10px] tracking-[0.2em] uppercase text-[#888] font-medium">
+                    Correo electrónico
+                  </label>
+                  <input
+                    type="email"
+                    value={recoveryEmail}
+                    onChange={(e) => setRecoveryEmail(e.target.value)}
+                    required
+                    placeholder="tu@email.com"
+                    className="w-full bg-[#111] border border-[#2A2A2A] text-white placeholder-[#444] px-4 py-3 text-sm outline-none focus:border-[#555] transition-colors"
+                  />
+                </div>
 
-          {/* Footer */}
-          <p className="text-center text-[#444] text-xs mt-8 tracking-wide">
-            ¿No tenés acceso aún?{' '}
-            <a
-              href="mailto:contacto@bianni.com"
-              className="text-[#888] hover:text-white transition-colors underline underline-offset-2"
-            >
-              Contactá a Bianni
-            </a>
-          </p>
+                <button
+                  type="submit"
+                  disabled={recoverying}
+                  className="w-full bg-white text-black text-xs font-medium tracking-[0.2em] uppercase py-4 hover:bg-[#e0e0e0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+                >
+                  {recoverying && <Loader2 size={14} className="animate-spin" />}
+                  {recoverying ? 'Enviando...' : 'Recuperar'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setView('login')}
+                  className="w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors pt-1"
+                >
+                  <ArrowLeft size={11} strokeWidth={1.5} />
+                  Volver al login
+                </button>
+              </form>
+            </>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

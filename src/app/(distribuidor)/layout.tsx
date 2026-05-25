@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   Sparkles,
+  AlertTriangle,
 } from 'lucide-react'
 
 const NAV_LINKS = [
@@ -95,6 +96,10 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
 
 function DistribuidorLayoutInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user } = useAuthStore()
+  const { clients } = useDataStore()
+  const client = clients.find((c) => c.id === user?.clientId)
+  const showProfileBanner = client?.profileCompleto === false
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#000]">
@@ -151,6 +156,16 @@ function DistribuidorLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
+          {showProfileBanner && (
+            <Link
+              href="/cuenta/completar"
+              className="flex items-center justify-center gap-2 bg-yellow-500 text-black px-4 py-2.5 text-[11px] tracking-[0.15em] uppercase font-medium hover:bg-yellow-400 transition-colors"
+            >
+              <AlertTriangle size={13} strokeWidth={2} />
+              Completá tus datos para poder hacer pedidos
+              <span aria-hidden="true">→</span>
+            </Link>
+          )}
           {children}
         </main>
       </div>
