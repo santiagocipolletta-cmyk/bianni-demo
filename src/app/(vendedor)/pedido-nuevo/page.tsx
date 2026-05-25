@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Check, ShoppingBag, Trash2, Search, AlertTriangle, Info, X } from 'lucide-react'
+import { Check, ShoppingBag, Trash2, Search, AlertTriangle, Info, X, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { useDataStore } from '@/stores/data-store'
@@ -12,6 +12,7 @@ import { formatARS, cn } from '@/lib/utils'
 import type { Order } from '@/types'
 
 const ALL_CAT = 'all'
+type StockFilter = 'todos' | 'disponible' | 'pocas' | 'sin_stock'
 
 function PedidoNuevoContent() {
   const searchParams = useSearchParams()
@@ -28,6 +29,7 @@ function PedidoNuevoContent() {
     getClientPriceList,
     getClientPendingOrders,
     getClientOpenClaims,
+    getStockState,
     addOrder,
   } = useDataStore()
 
@@ -37,6 +39,14 @@ function PedidoNuevoContent() {
   const [selectedClientId, setSelectedClientId] = useState<string>('')
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CAT)
   const [clientQuery, setClientQuery] = useState('')
+
+  // Filtros de producto
+  const [productSearch, setProductSearch] = useState('')
+  const [filterColor, setFilterColor] = useState('')
+  const [filterMaterial, setFilterMaterial] = useState('')
+  const [filterStock, setFilterStock] = useState<StockFilter>('todos')
+  const [filterNovedad, setFilterNovedad] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const sellerId = user?.sellerId
   const myClients = clients.filter((c) => c.sellerId === sellerId)
@@ -76,10 +86,47 @@ function PedidoNuevoContent() {
   const priceListId = priceList?.id ?? 'pl1'
 
   const activeProducts = products.filter((p) => p.estado === 'activo')
-  const visibleProducts =
-    selectedCategory === ALL_CAT
-      ? activeProducts
-      : activeProducts.filter((p) => p.categoryId === selectedCategory)
+
+  // Opciones únicas para filtros
+  const colorOptions = useMemo(() =>
+    [...new Set(activeProducts.map((p) => p.color).filter((c): c is string => !!c))].sort(),
+    [activeProducts]
+  )
+  const materialOptions = useMemo(() =>
+    [...new Set(activeProducts.map((p) => p.material).filter((m): m is string => !!m))].sort(),
+    [activeProducts]
+  )
+
+  // Filtrado completo
+  const visibleProducts = useMemo(() => {
+    return activeProducts.filter((p) => {
+      if (selectedCategory !== ALL_CAT && p.categoryId !== selectedCategory) return false
+      if (productSearch.trim()) {
+        const q = productSearch.toLowerCase()
+        if (!p.name.toLowerCase().includes(q) && !p.sku.toLowerCase().includes(q)) return false
+      }
+      if (filterColor && p.color !== filterColor) return false
+      if (filterMaterial && p.material !== filterMaterial) return false
+      if (filterNovedad && !p.novedad) return false
+      if (filterStock !== 'todos') {
+        const state = getStockState(p.id)
+        if (filterStock === 'disponible' && state === 'sin_stock') return false
+        if (filterStock === 'pocas'      && state !== 'pocas_unidades') return false
+        if (filterStock === 'sin_stock'  && state !== 'sin_stock') return false
+      }
+      return true
+    })
+  }, [activeProducts, selectedCategory, productSearch, filterColor, filterMaterial, filterNovedad, filterStock, getStockState])
+
+  const activeFilterCount = [productSearch.trim(), filterColor, filterMaterial, filterNovedad, filterStock !== 'todos'].filter(Boolean).length
+
+  function clearProductFilters() {
+    setProductSearch('')
+    setFilterColor('')
+    setFilterMaterial('')
+    setFilterNovedad(false)
+    setFilterStock('todos')
+  }
 
   const categoryTabs = [
     { id: ALL_CAT, label: 'Todos' },
@@ -210,23 +257,97 @@ function PedidoNuevoContent() {
           )
         })()}
 
-        {/* Category tabs — only show when client is selected */}
+        {/* Category tabs + product search — only show when client is selected */}
         {selectedClientId && (
-          <div className="flex gap-0 mt-4 overflow-x-auto">
-            {categoryTabs.map(({ id, label }) => (
+          <div className="mt-4 space-y-2">
+            {/* Row: category tabs + search + filters toggle */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex gap-0 overflow-x-auto flex-1">
+                {categoryTabs.map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => setSelectedCategory(id)}
+                    className={cn(
+                      'flex-shrink-0 px-4 py-2 text-[10px] tracking-[0.2em] uppercase border transition-colors',
+                      selectedCategory === id
+                        ? 'border-white bg-white text-black'
+                        : 'border-[#2A2A2A] text-[#A0A0A0] hover:text-white hover:border-[#555]'
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {/* Product search */}
+              <div className="relative flex-shrink-0 w-52">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#444]" />
+                <input
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="Buscar producto / SKU..."
+                  className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs pl-7 pr-3 py-1.5 focus:outline-none focus:border-[#555] placeholder:text-[#444]"
+                />
+              </div>
+              {/* Filters toggle */}
               <button
-                key={id}
-                onClick={() => setSelectedCategory(id)}
+                onClick={() => setFiltersOpen((v) => !v)}
                 className={cn(
-                  'flex-shrink-0 px-4 py-2 text-[10px] tracking-[0.2em] uppercase border transition-colors',
-                  selectedCategory === id
-                    ? 'border-white bg-white text-black'
-                    : 'border-[#2A2A2A] text-[#A0A0A0] hover:text-white hover:border-[#555]'
+                  'flex items-center gap-1 border text-[9px] tracking-[0.15em] uppercase px-2.5 py-1.5 transition-colors flex-shrink-0',
+                  filtersOpen || activeFilterCount > 0
+                    ? 'border-white text-white'
+                    : 'border-[#2A2A2A] text-[#A0A0A0] hover:border-[#555] hover:text-white'
                 )}
               >
-                {label}
+                <SlidersHorizontal size={11} strokeWidth={1.5} />
+                {activeFilterCount > 0 ? `${activeFilterCount} filtro${activeFilterCount > 1 ? 's' : ''}` : 'Filtros'}
               </button>
-            ))}
+            </div>
+
+            {/* Filters row */}
+            {filtersOpen && (
+              <div className="flex gap-2 flex-wrap items-center pt-1">
+                <select
+                  value={filterColor}
+                  onChange={(e) => setFilterColor(e.target.value)}
+                  className="bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#555]"
+                >
+                  <option value="">Color: todos</option>
+                  {colorOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <select
+                  value={filterMaterial}
+                  onChange={(e) => setFilterMaterial(e.target.value)}
+                  className="bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#555]"
+                >
+                  <option value="">Material: todos</option>
+                  {materialOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <select
+                  value={filterStock}
+                  onChange={(e) => setFilterStock(e.target.value as StockFilter)}
+                  className="bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#555]"
+                >
+                  <option value="todos">Stock: todos</option>
+                  <option value="disponible">Con stock</option>
+                  <option value="pocas">Últimas uds</option>
+                  <option value="sin_stock">Sin stock</option>
+                </select>
+                <label className="flex items-center gap-1.5 cursor-pointer text-[10px] tracking-[0.1em] uppercase text-[#A0A0A0]">
+                  <input
+                    type="checkbox"
+                    checked={filterNovedad}
+                    onChange={(e) => setFilterNovedad(e.target.checked)}
+                    className="accent-white"
+                  />
+                  Novedades
+                </label>
+                {activeFilterCount > 0 && (
+                  <button onClick={clearProductFilters} className="text-[9px] tracking-[0.15em] uppercase text-[#555] hover:text-white flex items-center gap-1 transition-colors">
+                    <X size={9} /> Limpiar
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -370,10 +491,17 @@ function PedidoNuevoContent() {
             </div>
 
             {visibleProducts.length === 0 && (
-              <div className="flex items-center justify-center py-24">
+              <div className="flex flex-col items-center justify-center py-24 gap-3">
                 <p className="text-[#555] text-xs tracking-[0.2em] uppercase">
-                  Sin productos en esta categoría
+                  {activeFilterCount > 0 || productSearch
+                    ? 'Sin resultados para los filtros aplicados'
+                    : 'Sin productos en esta categoría'}
                 </p>
+                {(activeFilterCount > 0 || productSearch) && (
+                  <button onClick={clearProductFilters} className="text-[10px] tracking-[0.15em] uppercase border border-[#2A2A2A] text-[#A0A0A0] hover:text-white hover:border-[#555] px-4 py-2 transition-colors">
+                    Limpiar filtros
+                  </button>
+                )}
               </div>
             )}
           </div>

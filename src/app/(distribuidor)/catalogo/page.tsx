@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingCart, Check, AlertCircle, ArrowRight } from 'lucide-react'
-import { motion } from 'motion/react'
+import { ShoppingCart, Check, AlertCircle, ArrowRight, Search, SlidersHorizontal, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'motion/react'
 import { useAuthStore } from '@/stores/auth-store'
 import { useDataStore } from '@/stores/data-store'
 import { useCartStore } from '@/stores/cart-store'
@@ -15,10 +15,22 @@ import type { Product } from '@/types'
 
 const ALL_CAT = 'all'
 
+type StockFilter = 'todos' | 'disponible' | 'pocas' | 'sin_stock'
+
 export default function CatalogoPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CAT)
   const [cartOpen, setCartOpen] = useState(false)
   const [detailProduct, setDetailProduct] = useState<Product | null>(null)
+
+  // Filtros avanzados
+  const [search, setSearch] = useState('')
+  const [filterColor, setFilterColor] = useState('')
+  const [filterMaterial, setFilterMaterial] = useState('')
+  const [filterNovedad, setFilterNovedad] = useState(false)
+  const [filterStock, setFilterStock] = useState<StockFilter>('todos')
+  const [priceMin, setPriceMin] = useState('')
+  const [priceMax, setPriceMax] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const { user } = useAuthStore()
   const { products, categories, clients, getProductPrice, getClientPriceList,
@@ -29,12 +41,52 @@ export default function CatalogoPage() {
   const priceList = client ? getClientPriceList(client.id) : null
   const priceListId = priceList?.id ?? 'pl1'
 
-  // Excluir productos en preventa del catálogo regular
+  // Productos activos sin preventa
   const activeProducts = products.filter((p) => p.estado === 'activo' && !p.preventa)
-  const visibleProducts =
-    selectedCategory === ALL_CAT
-      ? activeProducts
-      : activeProducts.filter((p) => p.categoryId === selectedCategory)
+
+  // Opciones únicas para filtros
+  const colorOptions = useMemo(() =>
+    [...new Set(activeProducts.map((p) => p.color).filter((c): c is string => !!c))].sort(),
+    [activeProducts]
+  )
+  const materialOptions = useMemo(() =>
+    [...new Set(activeProducts.map((p) => p.material).filter((m): m is string => !!m))].sort(),
+    [activeProducts]
+  )
+
+  // Filtrado completo
+  const visibleProducts = useMemo(() => {
+    return activeProducts.filter((p) => {
+      // Categoría
+      if (selectedCategory !== ALL_CAT && p.categoryId !== selectedCategory) return false
+      // Búsqueda por nombre/SKU
+      if (search.trim()) {
+        const q = search.toLowerCase()
+        const matchName = p.name.toLowerCase().includes(q)
+        const matchSku  = p.sku.toLowerCase().includes(q)
+        if (!matchName && !matchSku) return false
+      }
+      // Color
+      if (filterColor && p.color !== filterColor) return false
+      // Material
+      if (filterMaterial && p.material !== filterMaterial) return false
+      // Solo novedades
+      if (filterNovedad && !p.novedad) return false
+      // Stock
+      if (filterStock !== 'todos') {
+        const state = getStockState(p.id)
+        if (filterStock === 'disponible' && state === 'sin_stock') return false
+        if (filterStock === 'pocas'      && state !== 'pocas_unidades') return false
+        if (filterStock === 'sin_stock'  && state !== 'sin_stock') return false
+      }
+      // Precio
+      const price = getProductPrice(p.id, priceListId)
+      if (priceMin !== '' && price < Number(priceMin)) return false
+      if (priceMax !== '' && price > Number(priceMax)) return false
+      return true
+    })
+  }, [activeProducts, selectedCategory, search, filterColor, filterMaterial,
+      filterNovedad, filterStock, priceMin, priceMax, getStockState, getProductPrice, priceListId])
 
   const cartCount = getTotalUnidades()
 
@@ -42,6 +94,27 @@ export default function CatalogoPage() {
     { id: ALL_CAT, label: 'Todos' },
     ...categories.sort((a, b) => a.order - b.order).map((c) => ({ id: c.id, label: c.name })),
   ]
+
+  // Cantidad de filtros activos (sin contar categoría)
+  const activeFilterCount = [
+    search.trim(),
+    filterColor,
+    filterMaterial,
+    filterNovedad,
+    filterStock !== 'todos',
+    priceMin !== '',
+    priceMax !== '',
+  ].filter(Boolean).length
+
+  function clearFilters() {
+    setSearch('')
+    setFilterColor('')
+    setFilterMaterial('')
+    setFilterNovedad(false)
+    setFilterStock('todos')
+    setPriceMin('')
+    setPriceMax('')
+  }
 
   function isInCart(productId: string) {
     return items.some((i) => i.productId === productId)
@@ -71,20 +144,52 @@ export default function CatalogoPage() {
       )}
 
       {/* Page header */}
-      <div className="sticky top-0 z-30 border-b border-[#2A2A2A] bg-[#000]/95 backdrop-blur-sm px-4 lg:px-8 py-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl font-light tracking-[0.2em] uppercase text-white">
+      <div className="sticky top-0 z-30 border-b border-[#2A2A2A] bg-[#000]/95 backdrop-blur-sm px-4 lg:px-8 py-4">
+        {/* Top row: title + search + cart */}
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex-shrink-0">
+            <h1 className="font-display text-2xl lg:text-3xl font-light tracking-[0.2em] uppercase text-white leading-none">
               Catálogo
             </h1>
             <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mt-1">
               {client?.nombre ?? 'Distribuidor'}{priceList ? ` — Lista ${priceList.name}` : ''}
             </p>
           </div>
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <span className="hidden sm:inline-flex items-center border border-[#2A2A2A] px-3 py-1 text-[9px] tracking-[0.2em] uppercase text-[#555]">
-              Temporada 2026
-            </span>
+
+          {/* Search */}
+          <div className="flex-1 max-w-xs relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#444]" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nombre o SKU..."
+              className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs pl-8 pr-3 py-2 focus:outline-none focus:border-[#555] placeholder:text-[#444]"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] hover:text-white">
+                <X size={11} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Filters toggle */}
+            <button
+              onClick={() => setFiltersOpen((v) => !v)}
+              className={cn(
+                'flex items-center gap-1.5 border text-[10px] tracking-[0.15em] uppercase px-3 py-2 transition-colors',
+                filtersOpen || activeFilterCount > 0
+                  ? 'border-white text-white'
+                  : 'border-[#2A2A2A] text-[#A0A0A0] hover:border-[#555] hover:text-white'
+              )}
+            >
+              <SlidersHorizontal size={12} strokeWidth={1.5} />
+              Filtros
+              {activeFilterCount > 0 && (
+                <span className="bg-white text-black text-[9px] px-1 rounded-sm font-medium">{activeFilterCount}</span>
+              )}
+            </button>
+            {/* Cart */}
             <button
               onClick={() => setCartOpen(true)}
               className="relative flex items-center gap-2 border border-[#2A2A2A] px-3 py-2 text-[#A0A0A0] hover:border-white hover:text-white transition-colors"
@@ -96,7 +201,8 @@ export default function CatalogoPage() {
           </div>
         </div>
 
-        <div className="flex gap-0 mt-4 overflow-x-auto">
+        {/* Category tabs */}
+        <div className="flex gap-0 overflow-x-auto">
           {categoryTabs.map(({ id, label }) => (
             <button
               key={id}
@@ -112,9 +218,130 @@ export default function CatalogoPage() {
             </button>
           ))}
         </div>
+
+        {/* Filters panel */}
+        <AnimatePresence>
+          {filtersOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="overflow-hidden"
+            >
+              <div className="pt-4 pb-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-end">
+                {/* Color */}
+                <div>
+                  <label className="block text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">Color</label>
+                  <select
+                    value={filterColor}
+                    onChange={(e) => setFilterColor(e.target.value)}
+                    className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#555]"
+                  >
+                    <option value="">Todos</option>
+                    {colorOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                {/* Material */}
+                <div>
+                  <label className="block text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">Material</label>
+                  <select
+                    value={filterMaterial}
+                    onChange={(e) => setFilterMaterial(e.target.value)}
+                    className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#555]"
+                  >
+                    <option value="">Todos</option>
+                    {materialOptions.map((m) => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+
+                {/* Stock */}
+                <div>
+                  <label className="block text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">Stock</label>
+                  <select
+                    value={filterStock}
+                    onChange={(e) => setFilterStock(e.target.value as StockFilter)}
+                    className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#555]"
+                  >
+                    <option value="todos">Todos</option>
+                    <option value="disponible">Con stock</option>
+                    <option value="pocas">Últimas unidades</option>
+                    <option value="sin_stock">Sin stock</option>
+                  </select>
+                </div>
+
+                {/* Precio desde */}
+                <div>
+                  <label className="block text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">Precio desde ($)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                    placeholder="0"
+                    className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#555] placeholder:text-[#444]"
+                  />
+                </div>
+
+                {/* Precio hasta */}
+                <div>
+                  <label className="block text-[9px] tracking-[0.2em] uppercase text-[#555] mb-1">Precio hasta ($)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                    placeholder="Sin límite"
+                    className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#555] placeholder:text-[#444]"
+                  />
+                </div>
+
+                {/* Novedades + limpiar */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="flex items-center gap-2 cursor-pointer group mt-auto pb-0.5">
+                    <div
+                      onClick={() => setFilterNovedad((v) => !v)}
+                      className={cn(
+                        'w-4 h-4 border flex items-center justify-center transition-colors',
+                        filterNovedad ? 'bg-white border-white' : 'border-[#444] group-hover:border-[#777]'
+                      )}
+                    >
+                      {filterNovedad && <Check size={10} strokeWidth={3} className="text-black" />}
+                    </div>
+                    <span className="text-[10px] tracking-[0.15em] uppercase text-[#A0A0A0] group-hover:text-white transition-colors">
+                      Solo novedades
+                    </span>
+                  </label>
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={clearFilters}
+                      className="text-[9px] tracking-[0.15em] uppercase text-[#555] hover:text-white transition-colors text-left flex items-center gap-1"
+                    >
+                      <X size={10} /> Limpiar filtros
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="px-4 lg:px-8 py-8">
+        {/* Resultado count */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
+            {visibleProducts.length} {visibleProducts.length === 1 ? 'producto' : 'productos'}
+            {activeFilterCount > 0 && <span className="text-[#777]"> · filtros activos</span>}
+          </p>
+          {activeFilterCount > 0 && (
+            <button onClick={clearFilters} className="text-[9px] tracking-[0.15em] uppercase text-[#555] hover:text-white transition-colors flex items-center gap-1">
+              <X size={10} /> Limpiar filtros
+            </button>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 xl:grid-cols-3 gap-px bg-[#2A2A2A]">
           {visibleProducts.map((product, index) => {
             const price = getProductPrice(product.id, priceListId)
@@ -244,10 +471,20 @@ export default function CatalogoPage() {
         </div>
 
         {visibleProducts.length === 0 && (
-          <div className="flex items-center justify-center py-24">
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
             <p className="text-[#555] text-xs tracking-[0.2em] uppercase">
-              Sin productos en esta categoría
+              {activeFilterCount > 0 || search
+                ? 'Sin resultados para los filtros aplicados'
+                : 'Sin productos en esta categoría'}
             </p>
+            {(activeFilterCount > 0 || search) && (
+              <button
+                onClick={clearFilters}
+                className="text-[10px] tracking-[0.15em] uppercase border border-[#2A2A2A] text-[#A0A0A0] hover:text-white hover:border-[#555] px-4 py-2 transition-colors"
+              >
+                Limpiar filtros
+              </button>
+            )}
           </div>
         )}
       </div>
