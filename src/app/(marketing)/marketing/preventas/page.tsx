@@ -8,23 +8,34 @@ import { toast } from 'sonner'
 import { Sparkles, Check, X } from 'lucide-react'
 
 export default function MarketingPreventasPage() {
-  // Marketing puede marcar/desmarcar productos como preventa
-  const { products } = useDataStore()
+  // Marketing puede marcar/desmarcar productos como preventa y editar el cupo
+  const { products, updateProduct, orders } = useDataStore()
   const [filter, setFilter] = useState<'todos' | 'preventa' | 'regulares'>('preventa')
-  const [localOverrides, setLocalOverrides] = useState<Record<string, boolean>>({})
 
   const filtered = products.filter((p) => {
     if (filter === 'todos') return true
-    const isPreventa = localOverrides[p.id] !== undefined ? localOverrides[p.id] : p.preventa
-    return filter === 'preventa' ? isPreventa : !isPreventa
+    return filter === 'preventa' ? p.preventa : !p.preventa
   })
 
   function togglePreventa(productId: string, current: boolean) {
-    setLocalOverrides({ ...localOverrides, [productId]: !current })
+    updateProduct(productId, { preventa: !current })
     toast.success(
       !current ? 'Producto marcado como PREVENTA' : 'Producto quitado de preventa',
       { duration: 1500 }
     )
+  }
+
+  function updateCupo(productId: string, cupo: number) {
+    updateProduct(productId, { cupoPreventa: cupo > 0 ? cupo : undefined })
+  }
+
+  // Cuenta reservas por producto de preventa
+  function getReservasCount(productId: string) {
+    return orders
+      .filter((o) => ['pendiente_revision', 'modificado', 'aceptado', 'reserva_preventa'].includes(o.estado))
+      .flatMap((o) => o.items)
+      .filter((it) => it.productId === productId)
+      .reduce((s, it) => s + it.cantidad, 0)
   }
 
   return (
@@ -37,7 +48,7 @@ export default function MarketingPreventasPage() {
           </div>
           <h1 className="font-display text-3xl text-white tracking-[0.05em]">PREVENTAS</h1>
           <p className="text-[#555] text-xs tracking-[0.15em] uppercase mt-1">
-            Marcá qué productos están disponibles para reserva anticipada
+            Marcá qué productos están disponibles para reserva anticipada y definí el cupo guía
           </p>
         </div>
       </div>
@@ -53,7 +64,11 @@ export default function MarketingPreventasPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         {filtered.map((product) => {
-          const isPreventa = localOverrides[product.id] !== undefined ? localOverrides[product.id] : product.preventa
+          const isPreventa = product.preventa
+          const reservas = isPreventa ? getReservasCount(product.id) : 0
+          const cupo = product.cupoPreventa ?? 0
+          const cupoExcedido = cupo > 0 && reservas > cupo
+          const pctOcupado = cupo > 0 ? Math.min(100, (reservas / cupo) * 100) : 0
           return (
             <div key={product.id} className={cn(
               'bg-[#111] border overflow-hidden',
@@ -71,6 +86,41 @@ export default function MarketingPreventasPage() {
                 <p className="text-xs text-white font-light">{product.name}</p>
                 <p className="text-[10px] text-[#A0A0A0] font-mono">{product.sku}</p>
                 <p className="text-[10px] text-[#666]">PVR {formatARS(product.pvr)}</p>
+
+                {isPreventa && (
+                  <>
+                    {/* Input cupo + barra */}
+                    <div className="space-y-1 pt-1 border-t border-[#1A1A1A]">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-[9px] tracking-[0.15em] uppercase text-[#555]">Cupo</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={cupo}
+                          onChange={(e) => updateCupo(product.id, Number(e.target.value))}
+                          className="w-16 bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1 text-right focus:outline-none focus:border-[#444]"
+                        />
+                      </div>
+                      {cupo > 0 && (
+                        <>
+                          <div className="h-1 bg-[#1A1A1A] overflow-hidden">
+                            <div
+                              className={cn('h-full transition-all', cupoExcedido ? 'bg-yellow-500' : 'bg-emerald-500')}
+                              style={{ width: `${pctOcupado}%` }}
+                            />
+                          </div>
+                          <p className={cn(
+                            'text-[9px]',
+                            cupoExcedido ? 'text-yellow-400' : 'text-[#666]'
+                          )}>
+                            {reservas} / {cupo} reservadas {cupoExcedido && '· cupo excedido'}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+
                 <button onClick={() => togglePreventa(product.id, isPreventa)} className={cn(
                   'w-full flex items-center justify-center gap-1.5 border text-[9px] tracking-[0.15em] uppercase px-2 py-1.5 transition-colors',
                   isPreventa

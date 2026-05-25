@@ -101,7 +101,17 @@ export default function ClientesPage() {
         telefono: form.telefono.trim(),
         email: form.email.trim(),
         cuit: form.cuit.trim(),
-        direccion: form.direccion.trim(),
+        addresses: [
+          {
+            id: `ad_${Date.now()}`,
+            etiqueta: 'Local principal',
+            direccion: form.direccion.trim(),
+            ciudad: form.ciudad.trim(),
+            provincia: form.provincia,
+            codigoPostal: '',
+            esPrincipal: true,
+          },
+        ],
         status: 'activa',
         profileCompleto: true,
         verCuentaCorriente: true,

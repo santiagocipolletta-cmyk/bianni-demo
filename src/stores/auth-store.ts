@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { DemoUser } from '@/types'
 import { DEMO_USERS } from '@/lib/mock-data'
+import { useCartStore } from './cart-store'
 
 interface AuthState {
   user: DemoUser | null
@@ -57,6 +58,8 @@ export const useAuthStore = create<AuthState>()(
         deleteCookie('bianni-auth')
         deleteCookie('bianni-user-role')
         deleteCookie('bianni-user-id')
+        // Vaciar el carrito al cerrar sesión (carrito NO persistente entre sesiones)
+        useCartStore.getState().clearCart()
       },
     }),
     {

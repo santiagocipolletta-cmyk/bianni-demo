@@ -32,6 +32,8 @@ export interface ProductSubstitute {
   preferenceOrder: number   // 1 = primera opción, 2 = segunda, etc.
 }
 
+export type ProductStatus = 'borrador' | 'activo' | 'archivado'
+
 export interface Product {
   id: string
   sku: string
@@ -47,7 +49,12 @@ export interface Product {
   destacado: boolean                        // Marcar para lookbook público
   novedad: boolean                          // Marcar para lookbook público
   preventa: boolean                         // Producto en preventa (catálogo aparte)
-  active: boolean
+  cupoPreventa?: number                     // Cupo guía de unidades en preventa (no rígido)
+  // Atributos descriptivos para filtros
+  color?: string
+  material?: string
+  // Tri-estado: borrador no se muestra, activo se muestra, archivado conserva historial
+  estado: ProductStatus
 }
 
 // ─── PRICE LISTS ──────────────────────────────────────────────────────────────
@@ -65,14 +72,19 @@ export interface ProductPrice {
 
 // ─── DISCOUNTS & COUPONS ──────────────────────────────────────────────────────
 
+export type DiscountType = 'porcentaje' | 'monto_fijo'
+
 export interface DiscountCode {
   id: string
   codigo: string
   sellerId?: string                          // Cupones de vendedor (opcional)
-  porcentaje: number
+  tipo: DiscountType                         // % o monto fijo
+  valor: number                              // % si tipo='porcentaje', $ si tipo='monto_fijo'
+  porcentaje?: number                        // LEGACY: compat con código viejo que usa porcentaje
   activo: boolean
   usosMax: number
   usosActual: number
+  fechaInicio?: string                       // ISO date opcional
   fechaVencimiento?: string                  // ISO date opcional
   descripcion?: string
 }
@@ -103,10 +115,22 @@ export interface StockMovement {
 
 export type ClientStatus = 'activa' | 'suspendida' | 'pendiente_datos'
 
+export interface SavedAddress {
+  id: string                                 // ID interno de la dirección
+  etiqueta: string                           // 'Local principal' | 'Depósito' | 'Segundo local'...
+  direccion: string
+  ciudad: string
+  provincia: string
+  codigoPostal: string
+  receptor?: string
+  telefonoContacto?: string
+  esPrincipal: boolean                       // Una dirección por óptica es la principal
+}
+
 export interface Client {
   id: string
   nombre: string
-  ciudad: string
+  ciudad: string                             // Ciudad de la óptica (registro fiscal, no envío)
   provincia: string
   plazoPagoDias: number
   priceListId: string
@@ -115,9 +139,9 @@ export interface Client {
   email: string
   // Datos de facturación / completar tras primer login
   cuit?: string
-  direccion?: string
-  codigoPostal?: string
   razonSocial?: string
+  // Direcciones de envío guardadas (puede tener varias: local, depósito, etc.)
+  addresses: SavedAddress[]
   // Estado de la óptica
   status: ClientStatus
   profileCompleto: boolean
@@ -167,11 +191,13 @@ export type OrderStatus =
   | 'borrador'
   | 'pendiente_revision'                     // = Solicitud, esperando admin
   | 'modificado'                             // Admin modificó, ya confirmado
+  | 'cancelacion_solicitada'                 // Óptica pidió cancelar (admin debe confirmar)
   | 'aceptado'                               // = Pedido confirmado
   | 'rechazado'
   | 'cancelado'
   | 'despachado'
   | 'entregado'
+  | 'reserva_preventa'                       // Reserva de preventa (no descuenta stock real)
 
 export type TipoEntrega = 'envio' | 'coordinado_con_vendedor'
 
@@ -218,10 +244,17 @@ export interface Order {
   pickingIniciado?: boolean
   pickingCompletado?: boolean
   // Remito
+  remitoNumero?: number                      // Número correlativo automático
   remitoUrl?: string                         // URL al PDF cuando se confirma
   remitoGeneradoEn?: string
+  remitoRegeneradoEn?: string                // Si el pedido fue editado y se regeneró el remito
   // Notas del vendedor (bonificación por reclamo, etc.)
   bonificacionReclamoId?: string             // Vinculación con reclamo abierto
+  // Cancelación
+  cancelacionMotivo?: string                 // Si la óptica solicitó cancelación
+  cancelacionSolicitadaEn?: string
+  // Direccion de envío seleccionada (referencia a SavedAddress)
+  addressId?: string                         // Si se usó una dirección guardada
 }
 
 export interface OrderHistoryEntry {
@@ -239,11 +272,14 @@ export interface OrderHistoryEntry {
 export type NotificationType =
   | 'estado_pedido'
   | 'reclamo'
+  | 'reclamo_nuevo'
   | 'campania'
   | 'solicitud_representante'
   | 'stock_critico'
   | 'lead_nuevo'
   | 'alta_optica'
+  | 'cancelacion_solicitada'
+  | 'pedido_coordinado_confirmado'
 
 export interface Notification {
   id: string
@@ -258,7 +294,7 @@ export interface Notification {
 
 // ─── CLAIMS / RECLAMOS ────────────────────────────────────────────────────────
 
-export type ClaimStatus = 'recibido' | 'enviado_a_fabrica' | 'resuelto'
+export type ClaimStatus = 'recibido' | 'enviado_a_fabrica' | 'resuelto' | 'bonificado'
 
 export interface ClaimProduct {
   productId: string
@@ -412,11 +448,36 @@ export interface ProfileCompletionData {
 
 // ─── SETTINGS (CONFIG GLOBAL DEL SISTEMA) ─────────────────────────────────────
 
+export interface WhatsappTemplates {
+  pedidoConfirmadoAdmin: string              // Admin → óptica: "tu pedido X fue confirmado"
+  pedidoDespachado: string                   // Vendedor/admin → óptica
+  pedidoEntregado: string
+  pedidoRechazado: string
+  bienvenidaCredenciales: string             // Plantilla para enviar credenciales
+}
+
 export interface SystemSettings {
+  // Plazos
   plazoPagoEstandarDias: number              // Default 30
+  // Contacto BIANNI
   whatsappBianni: string                     // Número oficial BIANNI
   emailContacto: string
+  // Stock
   stockCriticalDefaultThreshold: number      // Default 5
+  // Cliente inactivo (días sin venta para alertar)
+  diasClienteInactivo: number                // Default 60
+  // Datos fiscales para el remito
+  razonSocialBianni: string
+  cuitBianni: string
+  direccionBianni: string
+  // Numeración correlativa de remitos
+  remitoProximoNumero: number                // Próximo número a asignar
+  // Templates de WhatsApp predeterminados
+  whatsappTemplates: WhatsappTemplates
+  // Métricas captación (mockeadas en demo, vienen de analytics real en prod)
+  visitasWebMes?: number
+  formulariosCompletadosMes?: number
+  usuariosCreadosMes?: number
 }
 
 // ─── COMPUTED/EXTENDED TYPES FOR UI ───────────────────────────────────────────

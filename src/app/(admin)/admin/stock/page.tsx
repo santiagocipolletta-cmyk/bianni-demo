@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import { useDataStore } from '@/stores/data-store'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { Plus, Minus, ScanLine, X, Check, Trash2, FileText } from 'lucide-react'
+import { Plus, Minus, ScanLine, X, Check, Trash2, FileText, Layers } from 'lucide-react'
 
 type StockFilter = 'todos' | 'normal' | 'bajo' | 'critico'
 type AdjustMode = 'set' | 'add' | 'subtract'
@@ -23,7 +24,34 @@ function getEstado(disponible: number): { label: string; cls: string } {
 }
 
 export default function AdminStockPage() {
-  const { stock, products, categories, updateStock, ingresoStock } = useDataStore()
+  const { stock, products, categories, updateStock, ingresoStock, bulkAdjustStock } = useDataStore()
+  const [bulkOpen, setBulkOpen] = useState(false)
+  const [bulkCategoryId, setBulkCategoryId] = useState<string>('')
+  const [bulkDelta, setBulkDelta] = useState<number>(0)
+  const [bulkMotivo, setBulkMotivo] = useState<string>('')
+
+  function handleBulkAdjust() {
+    if (bulkDelta === 0) {
+      toast.error('Indicá una cantidad distinta de cero')
+      return
+    }
+    if (!bulkMotivo.trim()) {
+      toast.error('Indicá un motivo')
+      return
+    }
+    bulkAdjustStock(
+      { categoryId: bulkCategoryId || undefined },
+      bulkDelta,
+      bulkMotivo.trim(),
+      'Giuliana Bianni'
+    )
+    const catName = bulkCategoryId ? categories.find((c) => c.id === bulkCategoryId)?.name : 'todos los productos'
+    toast.success(`${bulkDelta > 0 ? '+' : ''}${bulkDelta} unidades — ${catName}`)
+    setBulkOpen(false)
+    setBulkDelta(0)
+    setBulkCategoryId('')
+    setBulkMotivo('')
+  }
   const barcodeInputRef = useRef<HTMLInputElement>(null)
   const [barcodeInput, setBarcodeInput] = useState('')
   const [scanCantidad, setScanCantidad] = useState(1)
@@ -165,12 +193,75 @@ export default function AdminStockPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-3xl text-white tracking-[0.05em]">STOCK</h1>
-        <p className="text-[#555] text-xs tracking-[0.15em] uppercase mt-1">
-          Inventario en tiempo real
-        </p>
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-display text-3xl text-white tracking-[0.05em]">STOCK</h1>
+          <p className="text-[#555] text-xs tracking-[0.15em] uppercase mt-1">
+            Inventario en tiempo real
+          </p>
+        </div>
+        <button
+          onClick={() => setBulkOpen(true)}
+          className="flex items-center gap-2 border border-white text-white text-[10px] tracking-[0.15em] uppercase px-4 py-2.5 hover:bg-white hover:text-black transition-colors"
+        >
+          <Layers size={12} /> Ajuste masivo
+        </button>
       </div>
+
+      {/* Bulk adjust dialog */}
+      <Dialog.Root open={bulkOpen} onOpenChange={(v) => { if (!v) setBulkOpen(false) }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 bg-[#111] border border-[#2A2A2A] p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <Dialog.Title className="font-display text-xl text-white tracking-[0.05em]">AJUSTE MASIVO</Dialog.Title>
+                <Dialog.Description className="text-[#555] text-xs tracking-[0.1em] mt-1">
+                  Sumá o restá unidades a una categoría o a todo el catálogo
+                </Dialog.Description>
+              </div>
+              <Dialog.Close className="text-[#555] hover:text-white"><X size={18} /></Dialog.Close>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] tracking-[0.2em] uppercase text-[#555] mb-1">Categoría (opcional)</label>
+                <select
+                  value={bulkCategoryId}
+                  onChange={(e) => setBulkCategoryId(e.target.value)}
+                  className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-sm px-3 py-2 focus:outline-none focus:border-[#444]"
+                >
+                  <option value="">Todas las categorías</option>
+                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] tracking-[0.2em] uppercase text-[#555] mb-1">Cantidad a sumar/restar</label>
+                <input
+                  type="number"
+                  value={bulkDelta}
+                  onChange={(e) => setBulkDelta(Number(e.target.value))}
+                  className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-2xl font-light px-3 py-3 focus:outline-none focus:border-[#444]"
+                />
+                <p className="text-[10px] text-[#555] mt-1">Positivo: sumar unidades. Negativo: restar.</p>
+              </div>
+              <div>
+                <label className="block text-[10px] tracking-[0.2em] uppercase text-[#555] mb-1">Motivo</label>
+                <input
+                  type="text"
+                  value={bulkMotivo}
+                  onChange={(e) => setBulkMotivo(e.target.value)}
+                  placeholder="Ej: Conteo físico anual, ajuste por roturas..."
+                  className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-sm px-3 py-2 focus:outline-none focus:border-[#444] placeholder:text-[#444]"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setBulkOpen(false)} className="flex-1 border border-[#2A2A2A] text-[#A0A0A0] text-[10px] tracking-[0.15em] uppercase py-2.5 hover:bg-[#1A1A1A]">Cancelar</button>
+                <button onClick={handleBulkAdjust} className="flex-1 border border-white bg-white text-black text-[10px] tracking-[0.15em] uppercase py-2.5 hover:bg-zinc-200 font-medium">Aplicar</button>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {/* Alert banner */}
       {criticalCount > 0 && (

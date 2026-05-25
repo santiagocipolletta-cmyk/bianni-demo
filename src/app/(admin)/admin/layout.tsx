@@ -23,6 +23,7 @@ import {
   Inbox,
   Users,
   Wallet,
+  Settings,
 } from 'lucide-react'
 
 const NAV_LINKS = [
@@ -32,12 +33,15 @@ const NAV_LINKS = [
   { href: '/admin/solicitudes', label: 'Alta Ópticas', icon: Inbox },
   { href: '/admin/representantes', label: 'Representantes', icon: UserPlus },
   { href: '/admin/clientes', label: 'Ópticas', icon: Users },
+  { href: '/admin/vendedores', label: 'Vendedores', icon: Users },
   { href: '/admin/stock', label: 'Stock', icon: Package },
+  { href: '/admin/preventas', label: 'Preventas', icon: Package },
   { href: '/admin/reclamos', label: 'Reclamos', icon: AlertCircle },
   { href: '/admin/campanas', label: 'Campañas WA', icon: MessageSquare },
   { href: '/admin/crm', label: 'CRM / Leads', icon: Users },
   { href: '/admin/contenido', label: 'Contenido', icon: FolderOpen },
   { href: '/admin/erp-sync', label: 'ERP Sync', icon: RefreshCw },
+  { href: '/admin/configuracion', label: 'Configuración', icon: Settings },
 ]
 
 function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {

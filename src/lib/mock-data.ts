@@ -30,6 +30,21 @@ export const SYSTEM_SETTINGS: SystemSettings = {
   whatsappBianni: '5491123456789',
   emailContacto: 'contacto@bianni.com',
   stockCriticalDefaultThreshold: 5,
+  diasClienteInactivo: 60,
+  razonSocialBianni: 'BIANNI EYEWEAR S.A.',
+  cuitBianni: '30-71456789-2',
+  direccionBianni: 'Av. Libertador 5520, CABA',
+  remitoProximoNumero: 10, // ya hay 9 órdenes confirmadas
+  whatsappTemplates: {
+    pedidoConfirmadoAdmin: 'Hola! Tu pedido {codigo} fue confirmado. ¡Gracias por tu compra! 🔷',
+    pedidoDespachado: 'Hola! Tu pedido {codigo} ya fue despachado. En breve te llega.',
+    pedidoEntregado: 'Tu pedido {codigo} fue entregado. ¡Esperamos que lo disfrutes!',
+    pedidoRechazado: 'Hola, tu solicitud {codigo} no pudo confirmarse. Tu vendedor se contactará para coordinar.',
+    bienvenidaCredenciales: 'Bienvenida a BIANNI! 🔷 Tu usuario: {email}. Contraseña: {password}. Ingresá en {url}',
+  },
+  visitasWebMes: 1840,
+  formulariosCompletadosMes: 23,
+  usuariosCreadosMes: 4,
 }
 
 // ─── USERS ────────────────────────────────────────────────────────────────────
@@ -114,7 +129,9 @@ export const PRODUCTS: Product[] = [
     badge: null, imageUrl: PRODUCT_IMGS.cat1, photos: photos(PRODUCT_IMGS.cat1),
     pvr: 89000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p02', preferenceOrder: 1 }, { substituteProductId: 'p06', preferenceOrder: 2 }],
-    destacado: true, novedad: false, preventa: false, active: true,
+    destacado: true, novedad: false, preventa: false,
+    color: 'Negro', material: 'Acetato',
+    estado: 'activo',
   },
   {
     id: 'p02', sku: 'CL-002', name: 'Sport Clip', categoryId: 'cat1',
@@ -122,7 +139,9 @@ export const PRODUCTS: Product[] = [
     badge: 'NUEVO', imageUrl: PRODUCT_IMGS.cat1, photos: photos(PRODUCT_IMGS.cat1),
     pvr: 105000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p01', preferenceOrder: 1 }],
-    destacado: false, novedad: true, preventa: false, active: true,
+    destacado: false, novedad: true, preventa: false,
+    color: 'Azul', material: 'TR90',
+    estado: 'activo',
   },
   {
     id: 'p03', sku: 'CL-003', name: 'Premium Clip Gold', categoryId: 'cat1',
@@ -130,7 +149,9 @@ export const PRODUCTS: Product[] = [
     badge: 'TEMPORADA', imageUrl: PRODUCT_IMGS.cat1, photos: photos(PRODUCT_IMGS.cat1),
     pvr: 149000, stockCriticalThreshold: 3,
     substitutes: [{ substituteProductId: 'p06', preferenceOrder: 1 }],
-    destacado: true, novedad: false, preventa: false, active: true,
+    destacado: true, novedad: false, preventa: false,
+    color: 'Dorado', material: 'Acetato + Metal',
+    estado: 'activo',
   },
   {
     id: 'p04', sku: 'CL-004', name: 'Vintage Clip', categoryId: 'cat1',
@@ -138,7 +159,9 @@ export const PRODUCTS: Product[] = [
     badge: null, imageUrl: PRODUCT_IMGS.cat1, photos: photos(PRODUCT_IMGS.cat1),
     pvr: 82000, stockCriticalThreshold: 5,
     substitutes: [],
-    destacado: false, novedad: false, preventa: false, active: true,
+    destacado: false, novedad: false, preventa: false,
+    color: 'Tortoise', material: 'Acetato',
+    estado: 'activo',
   },
   {
     id: 'p05', sku: 'CL-005', name: 'Urban Clip', categoryId: 'cat1',
@@ -146,7 +169,9 @@ export const PRODUCTS: Product[] = [
     badge: null, imageUrl: PRODUCT_IMGS.cat1, photos: photos(PRODUCT_IMGS.cat1),
     pvr: 92000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p01', preferenceOrder: 1 }],
-    destacado: false, novedad: false, preventa: false, active: true,
+    destacado: false, novedad: false, preventa: false,
+    color: 'Negro mate', material: 'Acetato',
+    estado: 'activo',
   },
   {
     id: 'p06', sku: 'CL-006', name: 'Designer Clip', categoryId: 'cat1',
@@ -154,7 +179,9 @@ export const PRODUCTS: Product[] = [
     badge: 'NUEVO', imageUrl: PRODUCT_IMGS.cat1, photos: photos(PRODUCT_IMGS.cat1),
     pvr: 118000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p03', preferenceOrder: 1 }],
-    destacado: true, novedad: true, preventa: false, active: true,
+    destacado: true, novedad: true, preventa: false,
+    color: 'Plateado', material: 'Acetato + Metal',
+    estado: 'activo',
   },
 
   // ── RECETA (cat2) ──
@@ -164,7 +191,9 @@ export const PRODUCTS: Product[] = [
     badge: null, imageUrl: PRODUCT_IMGS.cat2, photos: photos(PRODUCT_IMGS.cat2),
     pvr: 78000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p09', preferenceOrder: 1 }],
-    destacado: false, novedad: false, preventa: false, active: true,
+    destacado: false, novedad: false, preventa: false,
+    color: 'Negro', material: 'Acetato',
+    estado: 'activo',
   },
   {
     id: 'p08', sku: 'RC-002', name: 'Square Vision', categoryId: 'cat2',
@@ -172,7 +201,9 @@ export const PRODUCTS: Product[] = [
     badge: 'TEMPORADA', imageUrl: PRODUCT_IMGS.cat2, photos: photos(PRODUCT_IMGS.cat2),
     pvr: 95000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p11', preferenceOrder: 1 }],
-    destacado: true, novedad: false, preventa: false, active: true,
+    destacado: true, novedad: false, preventa: false,
+    color: 'Tortoise', material: 'Acetato',
+    estado: 'activo',
   },
   {
     id: 'p09', sku: 'RC-003', name: 'Oval Slim', categoryId: 'cat2',
@@ -180,7 +211,9 @@ export const PRODUCTS: Product[] = [
     badge: null, imageUrl: PRODUCT_IMGS.cat2, photos: photos(PRODUCT_IMGS.cat2),
     pvr: 88000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p07', preferenceOrder: 1 }],
-    destacado: false, novedad: false, preventa: false, active: true,
+    destacado: false, novedad: false, preventa: false,
+    color: 'Negro', material: 'Acetato',
+    estado: 'activo',
   },
   {
     id: 'p10', sku: 'RC-004', name: 'Cat Eye', categoryId: 'cat2',
@@ -188,7 +221,9 @@ export const PRODUCTS: Product[] = [
     badge: 'NUEVO', imageUrl: PRODUCT_IMGS.cat2, photos: photos(PRODUCT_IMGS.cat2),
     pvr: 128000, stockCriticalThreshold: 3,
     substitutes: [],
-    destacado: true, novedad: true, preventa: false, active: true,
+    destacado: true, novedad: true, preventa: false,
+    color: 'Marrón', material: 'Acetato + Metal',
+    estado: 'activo',
   },
   {
     id: 'p11', sku: 'RC-005', name: 'Rectangle Pro', categoryId: 'cat2',
@@ -196,7 +231,9 @@ export const PRODUCTS: Product[] = [
     badge: null, imageUrl: PRODUCT_IMGS.cat2, photos: photos(PRODUCT_IMGS.cat2),
     pvr: 82000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p08', preferenceOrder: 1 }],
-    destacado: false, novedad: false, preventa: false, active: true,
+    destacado: false, novedad: false, preventa: false,
+    color: 'Negro', material: 'Acetato',
+    estado: 'activo',
   },
   {
     id: 'p12', sku: 'RC-006', name: 'Pilot Frame', categoryId: 'cat2',
@@ -204,7 +241,9 @@ export const PRODUCTS: Product[] = [
     badge: 'TEMPORADA', imageUrl: PRODUCT_IMGS.cat2, photos: photos(PRODUCT_IMGS.cat2),
     pvr: 138000, stockCriticalThreshold: 5,
     substitutes: [],
-    destacado: false, novedad: false, preventa: false, active: true,
+    destacado: false, novedad: false, preventa: false,
+    color: 'Plateado', material: 'Metal',
+    estado: 'activo',
   },
 
   // ── SOL (cat3) ──
@@ -214,7 +253,9 @@ export const PRODUCTS: Product[] = [
     badge: 'TEMPORADA', imageUrl: PRODUCT_IMGS.cat3, photos: photos(PRODUCT_IMGS.cat3),
     pvr: 158000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p16', preferenceOrder: 1 }],
-    destacado: true, novedad: false, preventa: false, active: true,
+    destacado: true, novedad: false, preventa: false,
+    color: 'Negro humo', material: 'Acetato',
+    estado: 'activo',
   },
   {
     id: 'p14', sku: 'SL-002', name: 'Butterfly Wave', categoryId: 'cat3',
@@ -222,7 +263,9 @@ export const PRODUCTS: Product[] = [
     badge: 'NUEVO', imageUrl: PRODUCT_IMGS.cat3, photos: photos(PRODUCT_IMGS.cat3),
     pvr: 165000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p13', preferenceOrder: 1 }],
-    destacado: false, novedad: true, preventa: false, active: true,
+    destacado: false, novedad: true, preventa: false,
+    color: 'Marrón', material: 'Acetato',
+    estado: 'activo',
   },
   {
     id: 'p15', sku: 'SL-003', name: 'Aviator Gold', categoryId: 'cat3',
@@ -230,7 +273,9 @@ export const PRODUCTS: Product[] = [
     badge: null, imageUrl: PRODUCT_IMGS.cat3, photos: photos(PRODUCT_IMGS.cat3),
     pvr: 175000, stockCriticalThreshold: 3,
     substitutes: [{ substituteProductId: 'p18', preferenceOrder: 1 }],
-    destacado: true, novedad: false, preventa: false, active: true,
+    destacado: true, novedad: false, preventa: false,
+    color: 'Dorado', material: 'Metal',
+    estado: 'activo',
   },
   {
     id: 'p16', sku: 'SL-004', name: 'Square Block', categoryId: 'cat3',
@@ -238,7 +283,9 @@ export const PRODUCTS: Product[] = [
     badge: null, imageUrl: PRODUCT_IMGS.cat3, photos: photos(PRODUCT_IMGS.cat3),
     pvr: 122000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p13', preferenceOrder: 1 }],
-    destacado: false, novedad: false, preventa: false, active: true,
+    destacado: false, novedad: false, preventa: false,
+    color: 'Negro', material: 'Acetato',
+    estado: 'activo',
   },
   {
     id: 'p17', sku: 'SL-005', name: 'Round Retro', categoryId: 'cat3',
@@ -246,7 +293,10 @@ export const PRODUCTS: Product[] = [
     badge: 'NUEVO', imageUrl: PRODUCT_IMGS.cat3, photos: photos(PRODUCT_IMGS.cat3),
     pvr: 105000, stockCriticalThreshold: 5,
     substitutes: [],
-    destacado: false, novedad: true, preventa: false, active: true,
+    destacado: false, novedad: true, preventa: false,
+    color: 'Bronce', material: 'Metal',
+    // BORRADOR — para demostrar producto sin publicar
+    estado: 'borrador',
   },
   {
     id: 'p18', sku: 'SL-006', name: 'Wraparound Sport', categoryId: 'cat3',
@@ -254,17 +304,22 @@ export const PRODUCTS: Product[] = [
     badge: null, imageUrl: PRODUCT_IMGS.cat3, photos: photos(PRODUCT_IMGS.cat3),
     pvr: 135000, stockCriticalThreshold: 5,
     substitutes: [{ substituteProductId: 'p15', preferenceOrder: 1 }],
-    destacado: false, novedad: false, preventa: false, active: true,
+    destacado: false, novedad: false, preventa: false,
+    color: 'Negro', material: 'TR90',
+    // ARCHIVADO — discontinuado pero conserva historial (orden o9 lo tiene)
+    estado: 'archivado',
   },
 
-  // ── PREVENTA — Colección 2026 (cat4 TR90 + cat5 METAL) ──
+  // ── PREVENTA — Colección 2027 (cat4 TR90 + cat5 METAL) ──
   {
     id: 'p19', sku: 'TR-001', name: 'Featherlight TR90', categoryId: 'cat4',
     description: 'Marco ultraliviano TR90, diseño ergonómico. Colección Verano 2027 — PREVENTA.',
     badge: 'NUEVO', imageUrl: PRODUCT_IMGS.cat2, photos: photos(PRODUCT_IMGS.cat2),
     pvr: 132000, stockCriticalThreshold: 5,
     substitutes: [],
-    destacado: false, novedad: true, preventa: true, active: true,
+    destacado: false, novedad: true, preventa: true, cupoPreventa: 80,
+    color: 'Negro mate', material: 'TR90',
+    estado: 'activo',
   },
   {
     id: 'p20', sku: 'TR-002', name: 'Flex Frame Pro', categoryId: 'cat4',
@@ -272,7 +327,9 @@ export const PRODUCTS: Product[] = [
     badge: 'NUEVO', imageUrl: PRODUCT_IMGS.cat1, photos: photos(PRODUCT_IMGS.cat1),
     pvr: 128000, stockCriticalThreshold: 5,
     substitutes: [],
-    destacado: false, novedad: true, preventa: true, active: true,
+    destacado: false, novedad: true, preventa: true, cupoPreventa: 60,
+    color: 'Azul', material: 'TR90',
+    estado: 'activo',
   },
   {
     id: 'p21', sku: 'MT-001', name: 'Metal Wire Round', categoryId: 'cat5',
@@ -280,7 +337,9 @@ export const PRODUCTS: Product[] = [
     badge: 'NUEVO', imageUrl: PRODUCT_IMGS.cat3, photos: photos(PRODUCT_IMGS.cat3),
     pvr: 145000, stockCriticalThreshold: 5,
     substitutes: [],
-    destacado: false, novedad: true, preventa: true, active: true,
+    destacado: false, novedad: true, preventa: true, cupoPreventa: 50,
+    color: 'Titanio', material: 'Metal',
+    estado: 'activo',
   },
   {
     id: 'p22', sku: 'MT-002', name: 'Steel Square', categoryId: 'cat5',
@@ -288,7 +347,9 @@ export const PRODUCTS: Product[] = [
     badge: 'NUEVO', imageUrl: PRODUCT_IMGS.cat3, photos: photos(PRODUCT_IMGS.cat3),
     pvr: 158000, stockCriticalThreshold: 5,
     substitutes: [],
-    destacado: false, novedad: true, preventa: true, active: true,
+    destacado: false, novedad: true, preventa: true, cupoPreventa: 40,
+    color: 'Plateado', material: 'Acero',
+    estado: 'activo',
   },
 ]
 
@@ -328,8 +389,11 @@ export const CLIENTS: Client[] = [
     id: 'c1', nombre: 'Óptica del Centro', ciudad: 'Buenos Aires', provincia: 'CABA',
     plazoPagoDias: 30, priceListId: 'pl1', sellerId: 's1',
     telefono: '5491144001111', email: 'contacto@opticacentro.com',
-    cuit: '30-71234567-8', direccion: 'Av. Corrientes 1234, Piso 3', codigoPostal: 'C1043',
-    razonSocial: 'Óptica del Centro S.A.',
+    cuit: '30-71234567-8', razonSocial: 'Óptica del Centro S.A.',
+    addresses: [
+      { id: 'ad-c1-1', etiqueta: 'Local principal', direccion: 'Av. Corrientes 1234, Piso 3', ciudad: 'Buenos Aires', provincia: 'CABA', codigoPostal: 'C1043', receptor: 'Recepción', telefonoContacto: '5491144001111', esPrincipal: true },
+      { id: 'ad-c1-2', etiqueta: 'Depósito Once', direccion: 'Pasteur 480', ciudad: 'Buenos Aires', provincia: 'CABA', codigoPostal: 'C1028', receptor: 'Depósito', esPrincipal: false },
+    ],
     status: 'activa', profileCompleto: true, verCuentaCorriente: true,
     fechaAlta: '2025-08-15T10:00:00.000Z', origenAlta: 'vendedor', ultimaCompra: '2026-05-10T09:15:00.000Z',
   },
@@ -337,8 +401,10 @@ export const CLIENTS: Client[] = [
     id: 'c2', nombre: 'Óptica La Visión', ciudad: 'Córdoba', provincia: 'Córdoba',
     plazoPagoDias: 30, priceListId: 'pl1', sellerId: 's1',
     telefono: '5493515002222', email: 'info@opticlavision.com',
-    cuit: '30-72345678-9', direccion: 'Av. Colón 567', codigoPostal: 'X5000',
-    razonSocial: 'La Visión SRL',
+    cuit: '30-72345678-9', razonSocial: 'La Visión SRL',
+    addresses: [
+      { id: 'ad-c2-1', etiqueta: 'Local principal', direccion: 'Av. Colón 567', ciudad: 'Córdoba', provincia: 'Córdoba', codigoPostal: 'X5000', esPrincipal: true },
+    ],
     status: 'activa', profileCompleto: true, verCuentaCorriente: true,
     fechaAlta: '2025-06-20T10:00:00.000Z', origenAlta: 'web', ultimaCompra: '2026-05-11T14:30:00.000Z',
   },
@@ -346,8 +412,10 @@ export const CLIENTS: Client[] = [
     id: 'c3', nombre: 'Óptica Premium', ciudad: 'Rosario', provincia: 'Santa Fe',
     plazoPagoDias: 45, priceListId: 'pl3', sellerId: 's1',
     telefono: '5493414003333', email: 'ventas@opticapremium.com',
-    cuit: '30-73456789-0', direccion: 'Pellegrini 890', codigoPostal: 'S2000',
-    razonSocial: 'Premium Óptica S.A.',
+    cuit: '30-73456789-0', razonSocial: 'Premium Óptica S.A.',
+    addresses: [
+      { id: 'ad-c3-1', etiqueta: 'Local principal', direccion: 'Pellegrini 890', ciudad: 'Rosario', provincia: 'Santa Fe', codigoPostal: 'S2000', esPrincipal: true },
+    ],
     status: 'activa', profileCompleto: true, verCuentaCorriente: true,
     fechaAlta: '2025-04-10T10:00:00.000Z', origenAlta: 'vendedor', ultimaCompra: '2026-05-12T10:00:00.000Z',
   },
@@ -355,8 +423,10 @@ export const CLIENTS: Client[] = [
     id: 'c4', nombre: 'Óptica del Sur', ciudad: 'Mendoza', provincia: 'Mendoza',
     plazoPagoDias: 30, priceListId: 'pl2', sellerId: 's2',
     telefono: '5492614004444', email: 'contacto@opticadelsur.com',
-    cuit: '30-74567890-1', direccion: 'San Martín 2345', codigoPostal: 'M5500',
-    razonSocial: 'Óptica del Sur SRL',
+    cuit: '30-74567890-1', razonSocial: 'Óptica del Sur SRL',
+    addresses: [
+      { id: 'ad-c4-1', etiqueta: 'Local principal', direccion: 'San Martín 2345', ciudad: 'Mendoza', provincia: 'Mendoza', codigoPostal: 'M5500', esPrincipal: true },
+    ],
     status: 'activa', profileCompleto: true, verCuentaCorriente: false, // deuda en negociación
     fechaAlta: '2025-09-01T10:00:00.000Z', origenAlta: 'vendedor', ultimaCompra: '2026-05-08T11:00:00.000Z',
   },
@@ -364,8 +434,10 @@ export const CLIENTS: Client[] = [
     id: 'c5', nombre: 'Óptica Norte', ciudad: 'Tucumán', provincia: 'Tucumán',
     plazoPagoDias: 30, priceListId: 'pl2', sellerId: 's2',
     telefono: '5493814005555', email: 'hola@opticanorte.com',
-    cuit: '30-75678901-2', direccion: 'Mendoza 678', codigoPostal: 'T4000',
-    razonSocial: 'Óptica Norte SA',
+    cuit: '30-75678901-2', razonSocial: 'Óptica Norte SA',
+    addresses: [
+      { id: 'ad-c5-1', etiqueta: 'Local principal', direccion: 'Mendoza 678', ciudad: 'Tucumán', provincia: 'Tucumán', codigoPostal: 'T4000', esPrincipal: true },
+    ],
     status: 'activa', profileCompleto: true, verCuentaCorriente: true,
     fechaAlta: '2025-11-15T10:00:00.000Z', origenAlta: 'web', ultimaCompra: '2026-05-07T16:45:00.000Z',
   },
@@ -374,8 +446,10 @@ export const CLIENTS: Client[] = [
     id: 'c6', nombre: 'Óptica Litoral', ciudad: 'Resistencia', provincia: 'Chaco',
     plazoPagoDias: 30, priceListId: 'pl2', sellerId: 's2',
     telefono: '5493624006666', email: 'litoral@opticas.com',
-    cuit: '30-76789012-3', direccion: 'Av. Sarmiento 1100', codigoPostal: 'H3500',
-    razonSocial: 'Litoral Óptica SRL',
+    cuit: '30-76789012-3', razonSocial: 'Litoral Óptica SRL',
+    addresses: [
+      { id: 'ad-c6-1', etiqueta: 'Local principal', direccion: 'Av. Sarmiento 1100', ciudad: 'Resistencia', provincia: 'Chaco', codigoPostal: 'H3500', esPrincipal: true },
+    ],
     status: 'activa', profileCompleto: true, verCuentaCorriente: true,
     fechaAlta: '2025-01-20T10:00:00.000Z', origenAlta: 'web', ultimaCompra: '2026-01-15T10:00:00.000Z',
   },
@@ -384,6 +458,7 @@ export const CLIENTS: Client[] = [
     id: 'c7', nombre: 'Óptica Luz Nueva', ciudad: 'Salta', provincia: 'Salta',
     plazoPagoDias: 30, priceListId: 'pl1', sellerId: 's3',
     telefono: '5493874007777', email: 'luznueva@gmail.com',
+    addresses: [],
     status: 'pendiente_datos', profileCompleto: false, verCuentaCorriente: true,
     fechaAlta: '2026-05-12T15:00:00.000Z', origenAlta: 'web',
   },
@@ -392,8 +467,10 @@ export const CLIENTS: Client[] = [
     id: 'c8', nombre: 'Óptica del Lago', ciudad: 'Bariloche', provincia: 'Río Negro',
     plazoPagoDias: 30, priceListId: 'pl2', sellerId: 's2',
     telefono: '5492944008888', email: 'lago@opticas.com',
-    cuit: '30-78901234-5', direccion: 'Mitre 456', codigoPostal: 'R8400',
-    razonSocial: 'Óptica del Lago SA',
+    cuit: '30-78901234-5', razonSocial: 'Óptica del Lago SA',
+    addresses: [
+      { id: 'ad-c8-1', etiqueta: 'Local principal', direccion: 'Mitre 456', ciudad: 'Bariloche', provincia: 'Río Negro', codigoPostal: 'R8400', esPrincipal: true },
+    ],
     status: 'suspendida', profileCompleto: true, verCuentaCorriente: false,
     fechaAlta: '2024-12-01T10:00:00.000Z', origenAlta: 'vendedor', ultimaCompra: '2025-09-15T10:00:00.000Z',
   },
@@ -418,8 +495,8 @@ export const STOCK: Stock[] = [
   { productId: 'p14', disponible: 19, reservado: 4 },
   { productId: 'p15', disponible: 4,  reservado: 1 }, // crítico
   { productId: 'p16', disponible: 30, reservado: 2 },
-  { productId: 'p17', disponible: 14, reservado: 0 },
-  { productId: 'p18', disponible: 8,  reservado: 3 },
+  { productId: 'p17', disponible: 0,  reservado: 0 }, // borrador, sin stock todavía
+  { productId: 'p18', disponible: 8,  reservado: 3 }, // archivado, mantiene stock residual
   // Preventa
   { productId: 'p19', disponible: 0,  reservado: 0 },
   { productId: 'p20', disponible: 0,  reservado: 0 },
@@ -442,11 +519,11 @@ export const STOCK_MOVEMENTS: StockMovement[] = [
 // ─── DISCOUNT CODES (CUPONES) ─────────────────────────────────────────────────
 
 export const DISCOUNT_CODES: DiscountCode[] = [
-  { id: 'd1', codigo: 'BIANNI10',    sellerId: 's1', porcentaje: 10, activo: true, usosMax: 50, usosActual: 12, descripcion: 'Descuento de Fernando para clientes nuevos' },
-  { id: 'd2', codigo: 'INVIERNO15',  sellerId: 's1', porcentaje: 15, activo: true, usosMax: 30, usosActual: 5, descripcion: 'Promo invierno 2026' },
-  { id: 'd3', codigo: 'NICO12',      sellerId: 's2', porcentaje: 12, activo: true, usosMax: 40, usosActual: 8, descripcion: 'Descuento de Nicolás' },
-  { id: 'd4', codigo: 'PAULA8',      sellerId: 's3', porcentaje: 8,  activo: true, usosMax: 100, usosActual: 22, descripcion: 'Bienvenida de Paula (canal online)' },
-  { id: 'd5', codigo: 'LANZAMIENTO', porcentaje: 20, activo: true, usosMax: 25, usosActual: 3, descripcion: 'Promo lanzamiento Colección 2026' },
+  { id: 'd1', codigo: 'BIANNI10',    sellerId: 's1', tipo: 'porcentaje', valor: 10, porcentaje: 10, activo: true, usosMax: 50, usosActual: 12, descripcion: 'Descuento de Fernando para clientes nuevos' },
+  { id: 'd2', codigo: 'INVIERNO15',  sellerId: 's1', tipo: 'porcentaje', valor: 15, porcentaje: 15, activo: true, usosMax: 30, usosActual: 5, descripcion: 'Promo invierno 2026', fechaVencimiento: '2026-08-31T23:59:59.000Z' },
+  { id: 'd3', codigo: 'NICO12',      sellerId: 's2', tipo: 'porcentaje', valor: 12, porcentaje: 12, activo: true, usosMax: 40, usosActual: 8, descripcion: 'Descuento de Nicolás' },
+  { id: 'd4', codigo: 'PAULA8',      sellerId: 's3', tipo: 'porcentaje', valor: 8, porcentaje: 8,  activo: true, usosMax: 100, usosActual: 22, descripcion: 'Bienvenida de Paula (canal online)' },
+  { id: 'd5', codigo: 'LANZAMIENTO', tipo: 'porcentaje', valor: 20, porcentaje: 20, activo: true, usosMax: 25, usosActual: 3, descripcion: 'Promo lanzamiento Colección 2026', fechaVencimiento: '2026-12-31T23:59:59.000Z' },
 ]
 
 // ─── REPRESENTATIVE REQUESTS (solicitudes web alta de óptica) ─────────────────
@@ -495,6 +572,7 @@ export const ORDERS: Order[] = [
     total: 4*32000 + 3*28000 + 2*58000,
     fecha: '2026-05-10T09:15:00.000Z', plazoPagoDias: 30,
     tipoEntrega: 'envio',
+    addressId: 'ad-c1-1',
     direccionEnvio: {
       direccion: 'Av. Corrientes 1234, Piso 3', ciudad: 'Buenos Aires', provincia: 'CABA',
       codigoPostal: 'C1043', receptor: 'Recepción', telefonoContacto: '5491144001111',
@@ -513,6 +591,7 @@ export const ORDERS: Order[] = [
     total: Math.round((5*35000 + 3*65000) * 0.90),
     fecha: '2026-05-11T14:30:00.000Z', plazoPagoDias: 30,
     tipoEntrega: 'envio',
+    addressId: 'ad-c2-1',
     direccionEnvio: { direccion: 'Av. Colón 567', ciudad: 'Córdoba', provincia: 'Córdoba', codigoPostal: 'X5000' },
   },
   // Solicitud con sustitución
@@ -539,9 +618,10 @@ export const ORDERS: Order[] = [
     subtotal: 6*41800 + 4*49500, total: 6*41800 + 4*49500,
     fecha: '2026-05-08T11:00:00.000Z', plazoPagoDias: 30,
     tipoEntrega: 'envio',
+    addressId: 'ad-c4-1',
     direccionEnvio: { direccion: 'San Martín 2345', ciudad: 'Mendoza', provincia: 'Mendoza', codigoPostal: 'M5500' },
     notasAdmin: 'Priorizar despacho por volumen.',
-    remitoUrl: '#remito-P-0004',
+    remitoNumero: 1, remitoUrl: '#remito-P-0004',
     remitoGeneradoEn: '2026-05-08T15:00:00.000Z',
   },
   {
@@ -554,7 +634,7 @@ export const ORDERS: Order[] = [
     fecha: '2026-05-07T16:45:00.000Z', plazoPagoDias: 30,
     tipoEntrega: 'coordinado_con_vendedor',
     pickingIniciado: true, pickingCompletado: true,
-    remitoUrl: '#remito-P-0005', remitoGeneradoEn: '2026-05-07T18:00:00.000Z',
+    remitoNumero: 2, remitoUrl: '#remito-P-0005', remitoGeneradoEn: '2026-05-07T18:00:00.000Z',
   },
   // Modificado (admin modificó y confirmó directamente)
   {
@@ -567,9 +647,10 @@ export const ORDERS: Order[] = [
     total: Math.round(8*29000*0.90 + 4*30000*0.90),
     fecha: '2026-05-06T09:30:00.000Z', plazoPagoDias: 30,
     tipoEntrega: 'envio',
+    addressId: 'ad-c1-1',
     direccionEnvio: { direccion: 'Av. Corrientes 1234, Piso 3', ciudad: 'Buenos Aires', provincia: 'CABA', codigoPostal: 'C1043' },
     notasAdmin: 'Reducimos cantidad de p04 de 10 a 8 por falta de stock.',
-    remitoUrl: '#remito-P-0006', remitoGeneradoEn: '2026-05-06T11:00:00.000Z',
+    remitoNumero: 3, remitoUrl: '#remito-P-0006', remitoGeneradoEn: '2026-05-06T11:00:00.000Z',
   },
   // Despachado
   {
@@ -581,9 +662,10 @@ export const ORDERS: Order[] = [
     subtotal: 4*41000 + 6*33000, total: 4*41000 + 6*33000,
     fecha: '2026-04-30T08:00:00.000Z', plazoPagoDias: 30,
     tipoEntrega: 'envio',
+    addressId: 'ad-c2-1',
     direccionEnvio: { direccion: 'Av. Colón 567', ciudad: 'Córdoba', provincia: 'Córdoba', codigoPostal: 'X5000' },
     pickingIniciado: true, pickingCompletado: true,
-    remitoUrl: '#remito-P-0007', remitoGeneradoEn: '2026-04-30T11:00:00.000Z',
+    remitoNumero: 4, remitoUrl: '#remito-P-0007', remitoGeneradoEn: '2026-04-30T11:00:00.000Z',
   },
   // Rechazado
   {
@@ -606,9 +688,10 @@ export const ORDERS: Order[] = [
     subtotal: 3*34100 + 5*49500, total: 3*34100 + 5*49500,
     fecha: '2026-04-22T10:00:00.000Z', plazoPagoDias: 30,
     tipoEntrega: 'envio',
+    addressId: 'ad-c4-1',
     direccionEnvio: { direccion: 'San Martín 2345', ciudad: 'Mendoza', provincia: 'Mendoza', codigoPostal: 'M5500' },
     pickingIniciado: true, pickingCompletado: true,
-    remitoUrl: '#remito-P-0009', remitoGeneradoEn: '2026-04-22T13:00:00.000Z',
+    remitoNumero: 5, remitoUrl: '#remito-P-0009', remitoGeneradoEn: '2026-04-22T13:00:00.000Z',
   },
   // Cancelado
   {
@@ -628,6 +711,7 @@ export const ORDERS: Order[] = [
     subtotal: 4*35000, total: 4*35000,
     fecha: '2026-05-13T11:00:00.000Z', plazoPagoDias: 30,
     tipoEntrega: 'envio',
+    addressId: 'ad-c2-1',
     direccionEnvio: { direccion: 'Av. Colón 567', ciudad: 'Córdoba', provincia: 'Córdoba', codigoPostal: 'X5000' },
     observaciones: 'BONIFICACIÓN POR RECLAMO R-001: descontar 1 unidad de p08 sin cargo.',
     bonificacionReclamoId: 'cl1',
@@ -689,12 +773,13 @@ export const CLAIMS: Claim[] = [
     createdAt: '2026-05-03T14:00:00.000Z',
   },
   {
+    // cl2 sin orden vinculada — solo descripción (productos vacíos para cumplir regla nueva)
     id: 'cl2', codigo: 'R-002', clienteId: 'c4', sellerId: 's2',
-    descripcion: 'Óptica del Sur reporta 2 unidades de p02 con defecto en bisagra (sin vincular a venta específica todavía).',
-    productos: [{ productId: 'p02', cantidadAfectada: 2, problema: 'Bisagra defectuosa' }],
+    descripcion: 'Óptica del Sur reporta defectos en bisagra de lentes Sport Clip (sin vincular a venta específica todavía — vendedor en proceso de identificar pedido).',
+    productos: [], // No se pueden asociar productos sin orden vinculada (regla nueva)
     fotosUrls: [],
     estado: 'recibido',
-    notasInternas: ['Pendiente confirmar pedido de origen con la óptica.'],
+    notasInternas: ['Pendiente confirmar pedido de origen con la óptica para vincular productos.'],
     createdAt: '2026-05-11T10:00:00.000Z',
   },
   {
@@ -702,8 +787,8 @@ export const CLAIMS: Claim[] = [
     descripcion: 'Reclamo por color distinto al solicitado en p13.',
     productos: [{ productId: 'p13', cantidadAfectada: 1, problema: 'Color distinto' }],
     fotosUrls: [],
-    estado: 'resuelto',
-    notasInternas: ['Bonificación aplicada en pedido P-0009 final.', 'Cliente conforme con resolución.'],
+    estado: 'bonificado',
+    notasInternas: ['Bonificación aplicada en pedido P-0009 final.', 'Cliente conforme con resolución.', '28/04 — Admin marca como bonificado/saldado.'],
     bonificadoEnPedidoId: 'o9',
     fechaResolucion: '2026-04-28T10:00:00.000Z',
     createdAt: '2026-04-25T11:00:00.000Z',

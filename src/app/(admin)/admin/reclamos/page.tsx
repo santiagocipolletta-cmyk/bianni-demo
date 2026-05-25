@@ -10,7 +10,7 @@ import type { Claim, ClaimStatus } from '@/types'
 type ClaimFilter = 'todos' | ClaimStatus
 
 function ClaimCard({ claim }: { claim: Claim }) {
-  const { clients, sellers, orders, products, updateClaimStatus, addClaimNote, resolveClaim } = useDataStore()
+  const { clients, sellers, orders, products, updateClaimStatus, addClaimNote, resolveClaim, markClaimBonificado } = useDataStore()
   const [nuevaNota, setNuevaNota] = useState('')
 
   const cliente = clients.find((c) => c.id === claim.clienteId)
@@ -34,6 +34,12 @@ function ClaimCard({ claim }: { claim: Claim }) {
     // En producción esto pediría qué pedido de bonificación se aplicó
     resolveClaim(claim.id, claim.orderId ?? '')
     toast.success('Reclamo marcado como resuelto')
+  }
+
+  function handleBonificado() {
+    if (!confirm('¿Marcar como bonificado/saldado? Esto apaga el aviso al vendedor.')) return
+    markClaimBonificado(claim.id, 'Giuliana Bianni')
+    toast.success('Reclamo marcado como bonificado/saldado')
   }
 
   return (
@@ -126,7 +132,7 @@ function ClaimCard({ claim }: { claim: Claim }) {
         </div>
       </div>
 
-      {claim.estado !== 'resuelto' && (
+      {claim.estado !== 'resuelto' && claim.estado !== 'bonificado' && (
         <div className="flex gap-2 justify-end flex-wrap pt-2 border-t border-[#1A1A1A]">
           {claim.estado === 'recibido' && (
             <button
@@ -144,6 +150,18 @@ function ClaimCard({ claim }: { claim: Claim }) {
           </button>
         </div>
       )}
+
+      {/* Bonificado/Saldado — solo después de resuelto */}
+      {claim.estado === 'resuelto' && (
+        <div className="flex gap-2 justify-end pt-2 border-t border-[#1A1A1A]">
+          <button
+            onClick={handleBonificado}
+            className="bg-teal-950 text-teal-300 text-[9px] tracking-[0.15em] uppercase px-4 py-1.5 hover:bg-teal-900 transition-colors border border-teal-700"
+          >
+            Marcar bonificado/saldado
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -157,6 +175,7 @@ export default function AdminReclamosPage() {
     { key: 'recibido', label: 'Recibidos' },
     { key: 'enviado_a_fabrica', label: 'En fábrica' },
     { key: 'resuelto', label: 'Resueltos' },
+    { key: 'bonificado', label: 'Bonificados' },
   ]
 
   const filtered = useMemo(() => {
@@ -166,8 +185,8 @@ export default function AdminReclamosPage() {
 
   // KPIs
   const totalReclamos = claims.length
-  const pendientes = claims.filter((c) => c.estado !== 'resuelto').length
-  const resueltos = claims.filter((c) => c.estado === 'resuelto').length
+  const pendientes = claims.filter((c) => c.estado !== 'resuelto' && c.estado !== 'bonificado').length
+  const resueltos = claims.filter((c) => c.estado === 'resuelto' || c.estado === 'bonificado').length
 
   return (
     <div className="p-6 space-y-6">

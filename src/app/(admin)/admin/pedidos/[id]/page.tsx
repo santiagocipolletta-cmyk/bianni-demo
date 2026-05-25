@@ -38,7 +38,7 @@ export default function AdminPedidoDetailPage({
 }) {
   const { id } = React.use(params)
 
-  const { getOrderWithDetails, updateOrderStatus, updateOrderItems, decrementStock, releaseStock, addNotification, products } =
+  const { getOrderWithDetails, updateOrderStatus, updateOrderItems, decrementStock, releaseStock, addNotification, products, confirmOrderCancellation, updateOrderPlazoPago, replaceOrderItems, sellers, clients } =
     useDataStore()
   const { user } = useAuthStore()
 
@@ -133,7 +133,44 @@ export default function AdminPedidoDetailPage({
       mensaje: `Tu pedido ${order!.codigo} fue aceptado y está en preparación.`,
       leida: false,
     })
+    // Notif al vendedor si el pedido es "coordinado_con_vendedor" (lo entrega él)
+    if (order!.tipoEntrega === 'coordinado_con_vendedor' && order!.sellerId) {
+      const sellerUser = ['u2', 'u4'].find((uid) => {
+        // mapping basico vendedor-user
+        return (uid === 'u2' && order!.sellerId === 's1') || (uid === 'u4' && order!.sellerId === 's3')
+      })
+      if (sellerUser) {
+        addNotification({
+          userId: sellerUser,
+          orderId: order!.id,
+          tipo: 'pedido_coordinado_confirmado',
+          titulo: `Pedido coordinado ${order!.codigo} confirmado`,
+          mensaje: `${order!.cliente?.nombre ?? 'Cliente'} — coordiná la entrega del pedido ${order!.codigo}.`,
+          leida: false,
+        })
+      }
+    }
     toast.success(`Pedido ${order!.codigo} aceptado`)
+  }
+
+  function handleConfirmarCancelacion() {
+    if (!order) return
+    confirmOrderCancellation(order.id, userName)
+    addNotification({
+      userId: getNotifUserId(order.clienteId),
+      orderId: order.id,
+      tipo: 'estado_pedido',
+      titulo: `Cancelación confirmada — ${order.codigo}`,
+      mensaje: `Tu solicitud ${order.codigo} fue cancelada y el stock liberado.`,
+      leida: false,
+    })
+    toast.success(`Pedido ${order.codigo} cancelado y stock liberado`)
+  }
+
+  function handleChangePlazo(dias: number) {
+    if (!order || dias < 0) return
+    updateOrderPlazoPago(order.id, dias)
+    toast.success(`Plazo actualizado a ${dias} días`)
   }
 
   function handleDespachado() {
@@ -183,6 +220,7 @@ export default function AdminPedidoDetailPage({
   }
 
   function handleGuardarModificacion() {
+    if (!order) return
     const newItems: OrderItem[] = editableItems.map((item) => ({
       productId: item.productId,
       cantidad: item.editCantidad,
@@ -190,28 +228,47 @@ export default function AdminPedidoDetailPage({
       descuentoAplicado: item.editDescuento,
       picked: item.picked,
     }))
-    updateOrderItems(order!.id, newItems)
-    // Admin modifica + confirma directamente (sin re-aprobación de óptica)
-    updateOrderStatus(order!.id, 'modificado', userName, 'Admin modificó y confirmó directamente')
-    // Descontar stock al confirmar
-    newItems.forEach((it) => {
-      decrementStock(it.productId, it.cantidad, order!.id, userName)
-    })
-    addNotification({
-      userId: getNotifUserId(order!.clienteId),
-      orderId: order!.id,
-      tipo: 'estado_pedido',
-      titulo: `Pedido ${order!.codigo} modificado y confirmado`,
-      mensaje: `Tu pedido ${order!.codigo} fue ajustado por el equipo de Bianni y confirmado. Ya está en preparación.`,
-      leida: false,
-    })
+
+    // Detección: si el pedido YA ESTABA confirmado, usar replaceOrderItems (revierte stock viejo, descuenta nuevo, regenera remito)
+    const isConfirmed = ['aceptado', 'modificado', 'despachado', 'entregado'].includes(order.estado)
+
+    if (isConfirmed) {
+      replaceOrderItems(order.id, newItems, userName)
+      addNotification({
+        userId: getNotifUserId(order.clienteId),
+        orderId: order.id,
+        tipo: 'estado_pedido',
+        titulo: `Pedido ${order.codigo} editado y remito regenerado`,
+        mensaje: `El equipo BIANNI editó tu pedido ${order.codigo}. El stock y el remito se actualizaron.`,
+        leida: false,
+      })
+      toast.success(`Pedido ${order.codigo}: stock y remito regenerados — la comisión la recalcula el ERP`)
+    } else {
+      // Flow original para pedidos pendientes
+      updateOrderItems(order.id, newItems)
+      updateOrderStatus(order.id, 'modificado', userName, 'Admin modificó y confirmó directamente')
+      newItems.forEach((it) => {
+        decrementStock(it.productId, it.cantidad, order.id, userName)
+      })
+      addNotification({
+        userId: getNotifUserId(order.clienteId),
+        orderId: order.id,
+        tipo: 'estado_pedido',
+        titulo: `Pedido ${order.codigo} modificado y confirmado`,
+        mensaje: `Tu pedido ${order.codigo} fue ajustado por el equipo de Bianni y confirmado. Ya está en preparación.`,
+        leida: false,
+      })
+      toast.success(`Pedido ${order.codigo} modificado`)
+    }
+
     setEditMode(false)
     setEditableItems([])
-    toast.success(`Pedido ${order!.codigo} modificado`)
   }
 
   const isActionable =
     order.estado === 'pendiente_revision' || order.estado === 'modificado'
+  // Editable también después de confirmado (para corregir errores — revierte stock+remito)
+  const isEditable = isActionable || ['aceptado', 'despachado', 'entregado'].includes(order.estado)
 
   return (
     <div className="p-6">
@@ -262,10 +319,6 @@ export default function AdminPedidoDetailPage({
                 label: 'Total',
                 value: formatARS(order.total),
               },
-              {
-                label: 'Plazo de pago',
-                value: `${order.plazoPagoDias} días`,
-              },
             ].map(({ label, value }) => (
               <div key={label} className="bg-[#0A0A0A] px-4 py-4">
                 <p className="text-[10px] tracking-[0.2em] uppercase text-[#555] mb-1">
@@ -274,7 +327,45 @@ export default function AdminPedidoDetailPage({
                 <p className="text-white text-sm font-light">{value}</p>
               </div>
             ))}
+            {/* Plazo de pago editable */}
+            <div className="bg-[#0A0A0A] px-4 py-4">
+              <p className="text-[10px] tracking-[0.2em] uppercase text-[#555] mb-1">
+                Plazo de pago
+              </p>
+              <div className="flex items-baseline gap-1">
+                <input
+                  type="number"
+                  min={0}
+                  value={order.plazoPagoDias}
+                  onChange={(e) => handleChangePlazo(Number(e.target.value))}
+                  className="w-14 bg-transparent text-white text-sm font-light border-b border-[#2A2A2A] focus:border-white focus:outline-none text-center"
+                />
+                <span className="text-[#555] text-xs">días</span>
+              </div>
+            </div>
           </div>
+
+          {/* Banner cancelación solicitada */}
+          {order.estado === 'cancelacion_solicitada' && (
+            <div className="border border-orange-900/50 bg-orange-950/30 px-4 py-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-orange-400">
+                  Cancelación solicitada por la óptica
+                </p>
+              </div>
+              {order.cancelacionMotivo && (
+                <p className="text-orange-200 text-sm leading-relaxed">
+                  Motivo: <span className="text-orange-100">{order.cancelacionMotivo}</span>
+                </p>
+              )}
+              <button
+                onClick={handleConfirmarCancelacion}
+                className="border border-orange-700 bg-orange-900 text-white text-[10px] tracking-[0.15em] uppercase px-4 py-2 hover:bg-orange-800"
+              >
+                Confirmar cancelación y liberar stock
+              </button>
+            </div>
+          )}
 
           {/* Motivo rechazo */}
           {order.motivoRechazo && (
@@ -463,6 +554,22 @@ export default function AdminPedidoDetailPage({
               <p className="text-[10px] tracking-[0.2em] uppercase text-[#555]">Acciones</p>
             </div>
             <div className="p-4 space-y-3">
+              {/* Edit ítems después de confirmar (revierte stock + remito) */}
+              {!isActionable && ['aceptado', 'modificado', 'despachado'].includes(order.estado) && !editMode && (
+                <>
+                  <button
+                    onClick={startEditMode}
+                    className="w-full flex items-center justify-center gap-2 border border-blue-800 bg-blue-950/40 hover:bg-blue-900/40 text-blue-200 text-xs tracking-[0.15em] uppercase px-4 py-3 transition-colors"
+                  >
+                    <Edit2 size={14} />
+                    Editar pedido confirmado
+                  </button>
+                  <p className="text-[10px] text-blue-300/60 leading-relaxed px-1">
+                    ⚠️ Al editar se revierte el stock viejo, se descuenta el nuevo y se regenera el remito. La comisión la recalcula el ERP.
+                  </p>
+                </>
+              )}
+
               {/* pendiente_revision or modificado */}
               {isActionable && !editMode && (
                 <>

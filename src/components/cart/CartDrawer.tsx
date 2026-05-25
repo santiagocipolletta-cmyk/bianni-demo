@@ -33,13 +33,17 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
   const confirming = useCartStore((s) => s.confirming)
   const setConfirming = useCartStore((s) => s.setConfirming)
 
+  // Direcciones guardadas
+  const principalAddress = client?.addresses.find((a) => a.esPrincipal) ?? client?.addresses[0]
+
   // Form state — checkout
   const [tipoEntrega, setTipoEntrega] = useState<TipoEntrega>('envio')
   const [editingDireccion, setEditingDireccion] = useState(false)
-  const [direccion, setDireccion] = useState(client?.direccion ?? '')
-  const [ciudad, setCiudad] = useState(client?.ciudad ?? '')
-  const [provincia, setProvincia] = useState(client?.provincia ?? '')
-  const [codigoPostal, setCodigoPostal] = useState(client?.codigoPostal ?? '')
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(principalAddress?.id ?? null)
+  const [direccion, setDireccion] = useState(principalAddress?.direccion ?? '')
+  const [ciudad, setCiudad] = useState(principalAddress?.ciudad ?? client?.ciudad ?? '')
+  const [provincia, setProvincia] = useState(principalAddress?.provincia ?? client?.provincia ?? '')
+  const [codigoPostal, setCodigoPostal] = useState(principalAddress?.codigoPostal ?? '')
   const [observaciones, setObservaciones] = useState('')
   const [cuponInput, setCuponInput] = useState('')
   const [cuponAplicado, setCuponAplicado] = useState<{ codigo: string; porcentaje: number } | null>(null)
@@ -74,8 +78,9 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
       toast.error('Cupón inválido o expirado')
       return
     }
-    setCuponAplicado({ codigo: c.codigo, porcentaje: c.porcentaje })
-    toast.success(`Cupón ${c.codigo} aplicado: ${c.porcentaje}% de descuento`)
+    const pct = c.tipo === 'porcentaje' ? c.valor : (c.porcentaje ?? 0)
+    setCuponAplicado({ codigo: c.codigo, porcentaje: pct })
+    toast.success(`Cupón ${c.codigo} aplicado: ${pct}% de descuento`)
   }
 
   function handleStartConfirm() {
@@ -124,6 +129,7 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
       fecha: new Date().toISOString(),
       plazoPagoDias: client.plazoPagoDias,
       tipoEntrega,
+      addressId: tipoEntrega === 'envio' && selectedAddressId ? selectedAddressId : undefined,
       direccionEnvio: tipoEntrega === 'envio' ? {
         direccion, ciudad, provincia, codigoPostal,
       } : undefined,
@@ -368,15 +374,74 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
 
                   {/* Datos envío precargados */}
                   {tipoEntrega === 'envio' ? (
-                    <div className="border border-[#2A2A2A] p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-[9px] tracking-[0.25em] uppercase text-[#555]">Dirección de envío</p>
-                        <button onClick={() => setEditingDireccion(!editingDireccion)} className="text-[9px] text-emerald-400 tracking-[0.1em] uppercase">
-                          {editingDireccion ? 'Listo' : 'Editar'}
-                        </button>
-                      </div>
-                      {editingDireccion ? (
+                    <div className="border border-[#2A2A2A] p-3 space-y-3">
+                      <p className="text-[9px] tracking-[0.25em] uppercase text-[#555]">Dirección de envío</p>
+
+                      {/* Selector de direcciones guardadas */}
+                      {client && client.addresses.length > 0 && (
                         <div className="space-y-1.5">
+                          {client.addresses.map((addr) => {
+                            const selected = selectedAddressId === addr.id
+                            return (
+                              <label
+                                key={addr.id}
+                                className={`flex items-start gap-2 border p-2 cursor-pointer transition-colors ${selected ? 'border-white bg-[#111]' : 'border-[#2A2A2A] hover:border-[#444]'}`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="address"
+                                  className="mt-0.5 accent-emerald-500"
+                                  checked={selected}
+                                  onChange={() => {
+                                    setSelectedAddressId(addr.id)
+                                    setEditingDireccion(false)
+                                    setDireccion(addr.direccion)
+                                    setCiudad(addr.ciudad)
+                                    setProvincia(addr.provincia)
+                                    setCodigoPostal(addr.codigoPostal)
+                                  }}
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[11px] text-white leading-tight flex items-center gap-1.5">
+                                    {addr.etiqueta}
+                                    {addr.esPrincipal && (
+                                      <span className="text-[8px] tracking-[0.2em] uppercase bg-emerald-950 text-emerald-400 px-1.5 py-0.5">
+                                        Principal
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className="text-[10px] text-[#A0A0A0] leading-tight truncate">
+                                    {addr.direccion} — {addr.ciudad}, {addr.codigoPostal}
+                                  </p>
+                                </div>
+                              </label>
+                            )
+                          })}
+                          <label
+                            className={`flex items-center gap-2 border p-2 cursor-pointer transition-colors ${selectedAddressId === null ? 'border-white bg-[#111]' : 'border-[#2A2A2A] hover:border-[#444]'}`}
+                          >
+                            <input
+                              type="radio"
+                              name="address"
+                              className="accent-emerald-500"
+                              checked={selectedAddressId === null}
+                              onChange={() => {
+                                setSelectedAddressId(null)
+                                setEditingDireccion(true)
+                                setDireccion('')
+                                setCiudad(client?.ciudad ?? '')
+                                setProvincia(client?.provincia ?? '')
+                                setCodigoPostal('')
+                              }}
+                            />
+                            <span className="text-[11px] text-white">Otra dirección (ingresar nueva)</span>
+                          </label>
+                        </div>
+                      )}
+
+                      {/* Inputs editables: visibles si "Otra" o si no hay guardadas */}
+                      {(selectedAddressId === null || !client || client.addresses.length === 0) ? (
+                        <div className="space-y-1.5 pt-1 border-t border-[#1A1A1A]">
                           <input value={direccion} onChange={(e) => setDireccion(e.target.value)} placeholder="Dirección"
                             className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5" />
                           <div className="grid grid-cols-2 gap-1.5">
@@ -385,12 +450,29 @@ export function CartDrawer({ open, onClose, products }: CartDrawerProps) {
                             <input value={codigoPostal} onChange={(e) => setCodigoPostal(e.target.value)} placeholder="C.P."
                               className="bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5" />
                           </div>
+                          <input value={provincia} onChange={(e) => setProvincia(e.target.value)} placeholder="Provincia"
+                            className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5" />
+                        </div>
+                      ) : editingDireccion ? (
+                        <div className="space-y-1.5 pt-1 border-t border-[#1A1A1A]">
+                          <input value={direccion} onChange={(e) => setDireccion(e.target.value)} placeholder="Dirección"
+                            className="w-full bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5" />
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <input value={ciudad} onChange={(e) => setCiudad(e.target.value)} placeholder="Ciudad"
+                              className="bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5" />
+                            <input value={codigoPostal} onChange={(e) => setCodigoPostal(e.target.value)} placeholder="C.P."
+                              className="bg-[#0A0A0A] border border-[#2A2A2A] text-white text-xs px-2 py-1.5" />
+                          </div>
+                          <button onClick={() => setEditingDireccion(false)} className="text-[9px] text-emerald-400 tracking-[0.1em] uppercase">
+                            Listo
+                          </button>
                         </div>
                       ) : (
-                        <p className="text-[11px] text-white leading-relaxed">
-                          {direccion || <span className="text-[#666] italic">Sin dirección cargada</span>}
-                          {direccion && (<><br/><span className="text-[#A0A0A0]">{ciudad}, {provincia} — {codigoPostal}</span></>)}
-                        </p>
+                        client && client.addresses.length > 0 && (
+                          <button onClick={() => setEditingDireccion(true)} className="text-[9px] text-emerald-400 tracking-[0.1em] uppercase">
+                            Editar esta dirección para este envío
+                          </button>
+                        )
                       )}
                     </div>
                   ) : (

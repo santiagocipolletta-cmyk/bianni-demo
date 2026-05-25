@@ -2,12 +2,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type {
   Product,
+  ProductStatus,
   Category,
   Order,
   OrderItem,
   OrderStatus,
   OrderHistoryEntry,
   Client,
+  SavedAddress,
   Seller,
   Stock,
   StockMovement,
@@ -82,10 +84,15 @@ interface DataState {
   // Order mutations
   updateOrderStatus: (orderId: string, newStatus: OrderStatus, changedBy: string, motivo?: string) => void
   updateOrderItems: (orderId: string, items: OrderItem[]) => void
+  replaceOrderItems: (orderId: string, newItems: OrderItem[], changedBy: string) => void   // Edita pedido confirmado: revierte stock viejo, descuenta nuevo, regenera remito
   updateOrderObservaciones: (orderId: string, observaciones: string) => void
+  updateOrderPlazoPago: (orderId: string, dias: number) => void
   setOrderPicking: (orderId: string, completado: boolean) => void
   togglePickedItem: (orderId: string, productId: string) => void
   addOrder: (order: Order) => void
+  requestOrderCancellation: (orderId: string, motivo: string, requestedBy: string) => void  // óptica solicita cancelar
+  confirmOrderCancellation: (orderId: string, changedBy: string) => void                    // admin confirma cancelación
+  convertReservaToOrder: (orderId: string, changedBy: string) => void                       // convertir reserva preventa a pedido normal
 
   // Stock mutations
   decrementStock: (productId: string, cantidad: number, orderId: string, changedBy: string) => void
@@ -94,6 +101,7 @@ interface DataState {
   addStockMovement: (movement: Omit<StockMovement, 'id' | 'createdAt'>) => void
   updateStock: (productId: string, disponible: number, motivo: string, changedBy: string) => void
   ingresoStock: (productId: string, cantidad: number, changedBy: string, motivo?: string) => void
+  bulkAdjustStock: (filter: { categoryId?: string }, delta: number, motivo: string, changedBy: string) => void  // ajuste masivo por categoría / global
 
   // Notification mutations
   markNotificationRead: (notifId: string) => void
@@ -104,13 +112,14 @@ interface DataState {
   updateClaimStatus: (claimId: string, estado: ClaimStatus) => void
   addClaimNote: (claimId: string, nota: string) => void
   resolveClaim: (claimId: string, pedidoIdBonificacion: string) => void
+  markClaimBonificado: (claimId: string, changedBy: string) => void  // admin marca como bonificado/saldado
 
   // Leads
   addLead: (lead: Omit<Lead, 'id' | 'createdAt' | 'notas'>) => void
   updateLeadStatus: (leadId: string, estado: LeadStatus) => void
   assignLead: (leadId: string, sellerId: string) => void
   addLeadNote: (leadId: string, nota: Omit<LeadNote, 'id' | 'createdAt'>) => void
-  convertLead: (leadId: string, clienteId: string) => void
+  convertLead: (leadId: string, clienteId: string) => void  // vincula sin marcar 'convertido' (se marca al primera venta)
 
   // Campaigns
   addCampaign: (campaign: Omit<Campaign, 'id'>) => void
@@ -123,6 +132,24 @@ interface DataState {
   // Products
   addProduct: (product: Product) => void
   addProductsBulk: (products: Product[]) => void
+  updateProduct: (productId: string, updates: Partial<Product>) => void
+  setProductStatus: (productId: string, estado: ProductStatus) => void
+  bulkUpdatePrices: (filter: { categoryId?: string; priceListId?: string }, pctIncrease: number) => void
+
+  // Categories
+  addCategory: (cat: Omit<Category, 'id'>) => void
+  updateCategory: (catId: string, updates: Partial<Category>) => void
+  deleteCategory: (catId: string) => { ok: boolean; reason?: string }  // bloquea si hay productos en uso
+
+  // Discount codes / cupones — CRUD
+  addCoupon: (coupon: Omit<DiscountCode, 'id' | 'usosActual'>) => void
+  updateCoupon: (couponId: string, updates: Partial<DiscountCode>) => void
+  deleteCoupon: (couponId: string) => void
+  validateCoupon: (codigo: string) => DiscountCode | null
+
+  // Settings
+  updateSettings: (updates: Partial<SystemSettings>) => void
+  getNextRemitoNumber: () => number  // incrementa el contador y devuelve el número
 
   // Clients
   updateClientStatus: (clientId: string, status: Client['status']) => void
@@ -130,14 +157,21 @@ interface DataState {
   toggleClientCtaCteVisibility: (clientId: string) => void
   updateClientPlazoPago: (clientId: string, dias: number) => void
   addClient: (client: Client) => void
+  updateClient: (clientId: string, updates: Partial<Client>) => void
+  reassignClient: (clientId: string, newSellerId: string) => void
+  reassignClientsBulk: (fromSellerId: string, toSellerId: string) => number  // retorna cantidad reasignada
+  resetClientPassword: (clientId: string) => string  // retorna password mock generado
+
+  // Client addresses
+  addClientAddress: (clientId: string, addr: Omit<SavedAddress, 'id'>) => void
+  updateClientAddress: (clientId: string, addrId: string, updates: Partial<SavedAddress>) => void
+  deleteClientAddress: (clientId: string, addrId: string) => void
+  setClientAddressPrincipal: (clientId: string, addrId: string) => void
 
   // Representative requests
   addRepresentativeRequest: (req: Omit<RepresentativeRequest, 'id' | 'createdAt' | 'estado'>) => void
   approveRepresentativeRequest: (requestId: string, sellerId: string, resueltaPor: string) => void
   rejectRepresentativeRequest: (requestId: string, motivo: string, resueltaPor: string) => void
-
-  // Discount codes / cupones
-  validateCoupon: (codigo: string) => DiscountCode | null
 
   // Helpers / derived
   getOrderWithDetails: (orderId: string) => OrderWithDetails | null
@@ -152,6 +186,9 @@ interface DataState {
   getClientBalance: (clientId: string) => number
   getSellerCommissionsMonth: (sellerId: string, monthsAgo?: number) => Commission[]
   getInactiveClients: (daysSinceLastPurchase: number) => Client[]
+  getReservasPreventa: () => Order[]
+  getActiveProducts: () => Product[]                                 // solo productos en estado 'activo'
+  getCatalogProducts: () => Product[]                                // alias semántico, no incluye preventa
 }
 
 let idCounter = 1000
@@ -199,20 +236,30 @@ export const useDataStore = create<DataState>()(
             motivo,
             createdAt: new Date().toISOString(),
           }
+          // Asignar número de remito correlativo cuando se acepta por primera vez
+          const isFirstAccept = newStatus === 'aceptado' && !order.remitoNumero
+          const nextRemitoNumero = isFirstAccept ? state.settings.remitoProximoNumero : undefined
           return {
             orders: state.orders.map((o) =>
               o.id === orderId
                 ? {
                     ...o,
                     estado: newStatus,
-                    ...(newStatus === 'aceptado' && !o.remitoUrl
-                      ? { remitoUrl: `#remito-${o.codigo}`, remitoGeneradoEn: new Date().toISOString() }
+                    ...(isFirstAccept
+                      ? {
+                          remitoNumero: nextRemitoNumero,
+                          remitoUrl: `#remito-${o.codigo}`,
+                          remitoGeneradoEn: new Date().toISOString(),
+                        }
                       : {}),
                     ...(newStatus === 'rechazado' && motivo ? { motivoRechazo: motivo } : {}),
                   }
                 : o
             ),
             orderHistory: [...state.orderHistory, historyEntry],
+            settings: isFirstAccept
+              ? { ...state.settings, remitoProximoNumero: state.settings.remitoProximoNumero + 1 }
+              : state.settings,
           }
         })
       },
@@ -233,9 +280,106 @@ export const useDataStore = create<DataState>()(
         }))
       },
 
+      // Reemplaza items de un pedido YA CONFIRMADO: libera stock viejo, descuenta nuevo, regenera remito.
+      // Nota: la comisión la recalcula el ERP (acá no se toca).
+      replaceOrderItems: (orderId, newItems, changedBy) => {
+        const state = get()
+        const order = state.orders.find((o) => o.id === orderId)
+        if (!order) return
+
+        // 1. Liberar stock de items viejos (devolver al disponible)
+        for (const oldItem of order.items) {
+          set((s) => ({
+            stock: s.stock.map((st) =>
+              st.productId === oldItem.productId
+                ? { ...st, disponible: st.disponible + oldItem.cantidad }
+                : st
+            ),
+            stockMovements: [
+              ...s.stockMovements,
+              {
+                id: generateId('sm'),
+                productId: oldItem.productId,
+                tipo: 'ajuste_manual',
+                cantidad: oldItem.cantidad,
+                motivo: `Reversión por edición de pedido ${order.codigo}`,
+                orderId,
+                realizadoPor: changedBy,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+          }))
+        }
+
+        // 2. Descontar stock de items nuevos
+        for (const newItem of newItems) {
+          set((s) => ({
+            stock: s.stock.map((st) =>
+              st.productId === newItem.productId
+                ? { ...st, disponible: Math.max(0, st.disponible - newItem.cantidad) }
+                : st
+            ),
+            stockMovements: [
+              ...s.stockMovements,
+              {
+                id: generateId('sm'),
+                productId: newItem.productId,
+                tipo: 'venta',
+                cantidad: -newItem.cantidad,
+                motivo: `Edición pedido ${order.codigo}`,
+                orderId,
+                realizadoPor: changedBy,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+          }))
+        }
+
+        // 3. Actualizar items + regenerar remito (mismo número, marca regenerado)
+        const subtotal = newItems.reduce(
+          (sum, item) => sum + item.precioUnit * item.cantidad * (1 - item.descuentoAplicado / 100),
+          0
+        )
+        const cuponPct = order.cuponDescuentoPct ?? 0
+        const total = Math.round(subtotal * (1 - cuponPct / 100))
+        set((s) => ({
+          orders: s.orders.map((o) =>
+            o.id === orderId
+              ? {
+                  ...o,
+                  items: newItems,
+                  subtotal: Math.round(subtotal),
+                  total,
+                  remitoRegeneradoEn: new Date().toISOString(),
+                }
+              : o
+          ),
+          orderHistory: [
+            ...s.orderHistory,
+            {
+              id: generateId('h'),
+              orderId,
+              estadoAnterior: order.estado,
+              estadoNuevo: order.estado,
+              cambiadoPor: changedBy,
+              motivo: 'Pedido editado tras confirmación — stock y remito regenerados',
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        }))
+      },
+
       updateOrderObservaciones: (orderId, observaciones) => {
         set((state) => ({
           orders: state.orders.map((o) => (o.id === orderId ? { ...o, observaciones } : o)),
+        }))
+      },
+
+      updateOrderPlazoPago: (orderId, dias) => {
+        set((state) => ({
+          orders: state.orders.map((o) =>
+            o.id === orderId ? { ...o, plazoPagoDias: dias } : o
+          ),
         }))
       },
 
@@ -282,6 +426,103 @@ export const useDataStore = create<DataState>()(
         }))
       },
 
+      // Óptica solicita cancelar pedido (NO libera stock todavía, admin debe confirmar)
+      requestOrderCancellation: (orderId, motivo, requestedBy) => {
+        set((state) => {
+          const order = state.orders.find((o) => o.id === orderId)
+          if (!order) return state
+          return {
+            orders: state.orders.map((o) =>
+              o.id === orderId
+                ? {
+                    ...o,
+                    estado: 'cancelacion_solicitada' as OrderStatus,
+                    cancelacionMotivo: motivo,
+                    cancelacionSolicitadaEn: new Date().toISOString(),
+                  }
+                : o
+            ),
+            orderHistory: [
+              ...state.orderHistory,
+              {
+                id: generateId('h'),
+                orderId,
+                estadoAnterior: order.estado,
+                estadoNuevo: 'cancelacion_solicitada',
+                cambiadoPor: requestedBy,
+                motivo,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+          }
+        })
+      },
+
+      // Admin confirma la cancelación: libera stock
+      confirmOrderCancellation: (orderId, changedBy) => {
+        const state = get()
+        const order = state.orders.find((o) => o.id === orderId)
+        if (!order) return
+        // Liberar reservas de cada item
+        for (const item of order.items) {
+          get().releaseStock(item.productId, item.cantidad, orderId, changedBy)
+        }
+        set((s) => ({
+          orders: s.orders.map((o) =>
+            o.id === orderId ? { ...o, estado: 'cancelado' as OrderStatus } : o
+          ),
+          orderHistory: [
+            ...s.orderHistory,
+            {
+              id: generateId('h'),
+              orderId,
+              estadoAnterior: order.estado,
+              estadoNuevo: 'cancelado',
+              cambiadoPor: changedBy,
+              motivo: 'Cancelación confirmada por admin',
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        }))
+      },
+
+      // Convertir reserva de preventa a pedido normal (al llegar mercadería)
+      convertReservaToOrder: (orderId, changedBy) => {
+        const state = get()
+        const order = state.orders.find((o) => o.id === orderId)
+        if (!order) return
+        // Descontar stock real
+        for (const item of order.items) {
+          get().decrementStock(item.productId, item.cantidad, orderId, changedBy)
+        }
+        set((s) => ({
+          orders: s.orders.map((o) =>
+            o.id === orderId
+              ? {
+                  ...o,
+                  estado: 'aceptado' as OrderStatus,
+                  remitoNumero: s.settings.remitoProximoNumero,
+                  remitoUrl: `#remito-${o.codigo}`,
+                  remitoGeneradoEn: new Date().toISOString(),
+                }
+              : o
+          ),
+          settings: { ...s.settings, remitoProximoNumero: s.settings.remitoProximoNumero + 1 },
+          orderHistory: [
+            ...s.orderHistory,
+            {
+              id: generateId('h'),
+              orderId,
+              estadoAnterior: order.estado,
+              estadoNuevo: 'aceptado',
+              cambiadoPor: changedBy,
+              motivo: 'Reserva de preventa convertida a pedido (mercadería recibida)',
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        }))
+      },
+
       // ── Stock ────────────────────────────────────────────────────────────
       decrementStock: (productId, cantidad, orderId, changedBy) => {
         set((state) => ({
@@ -303,6 +544,25 @@ export const useDataStore = create<DataState>()(
             },
           ],
         }))
+        // Trigger stock crítico
+        const product = get().products.find((p) => p.id === productId)
+        const available = get().getStockAvailable(productId)
+        const threshold = product?.stockCriticalThreshold ?? get().settings.stockCriticalDefaultThreshold
+        if (product && available > 0 && available <= threshold) {
+          const adminUser = 'u3' // Giuliana
+          const lastSimilarNotif = get().notifications.find(
+            (n) => n.tipo === 'stock_critico' && n.mensaje.includes(product.sku) && !n.leida
+          )
+          if (!lastSimilarNotif) {
+            get().addNotification({
+              userId: adminUser,
+              tipo: 'stock_critico',
+              titulo: `Stock crítico — ${product.name}`,
+              mensaje: `Solo quedan ${available} unidades de ${product.sku} (${product.name}). Umbral: ${threshold}.`,
+              leida: false,
+            })
+          }
+        }
       },
 
       freezeStock: (productId, cantidad, orderId, changedBy) => {
@@ -394,6 +654,32 @@ export const useDataStore = create<DataState>()(
         }))
       },
 
+      bulkAdjustStock: (filter, delta, motivo, changedBy) => {
+        const state = get()
+        const targetProductIds = state.products
+          .filter((p) => !filter.categoryId || p.categoryId === filter.categoryId)
+          .map((p) => p.id)
+        set((s) => ({
+          stock: s.stock.map((st) =>
+            targetProductIds.includes(st.productId)
+              ? { ...st, disponible: Math.max(0, st.disponible + delta) }
+              : st
+          ),
+          stockMovements: [
+            ...s.stockMovements,
+            ...targetProductIds.map((pid) => ({
+              id: generateId('sm'),
+              productId: pid,
+              tipo: 'ajuste_manual' as const,
+              cantidad: delta,
+              motivo: `${motivo} (ajuste masivo)`,
+              realizadoPor: changedBy,
+              createdAt: new Date().toISOString(),
+            })),
+          ],
+        }))
+      },
+
       // ── Notifications ────────────────────────────────────────────────────
       markNotificationRead: (notifId) => {
         set((state) => ({
@@ -420,6 +706,14 @@ export const useDataStore = create<DataState>()(
           createdAt: new Date().toISOString(),
         }
         set((state) => ({ claims: [...state.claims, newClaim] }))
+        // Trigger notif al admin
+        get().addNotification({
+          userId: 'u3',
+          tipo: 'reclamo_nuevo',
+          titulo: `Nuevo reclamo — ${newClaim.codigo}`,
+          mensaje: `${newClaim.descripcion.slice(0, 80)}${newClaim.descripcion.length > 80 ? '…' : ''}`,
+          leida: false,
+        })
       },
 
       updateClaimStatus: (claimId, estado) => {
@@ -445,6 +739,23 @@ export const useDataStore = create<DataState>()(
                   estado: 'resuelto' as ClaimStatus,
                   bonificadoEnPedidoId: pedidoIdBonificacion,
                   fechaResolucion: new Date().toISOString(),
+                }
+              : c
+          ),
+        }))
+      },
+
+      markClaimBonificado: (claimId, changedBy) => {
+        set((state) => ({
+          claims: state.claims.map((c) =>
+            c.id === claimId
+              ? {
+                  ...c,
+                  estado: 'bonificado' as ClaimStatus,
+                  notasInternas: [
+                    ...c.notasInternas,
+                    `${new Date().toLocaleDateString('es-AR')} — Marcado como bonificado/saldado por ${changedBy}.`,
+                  ],
                 }
               : c
           ),
@@ -487,11 +798,12 @@ export const useDataStore = create<DataState>()(
         }))
       },
 
+      // Vincula lead a cliente recién creado (NO marca 'convertido' — eso pasa al tener primera venta)
       convertLead: (leadId, clienteId) => {
         set((state) => ({
           leads: state.leads.map((l) =>
             l.id === leadId
-              ? { ...l, estado: 'convertido' as LeadStatus, clienteIdConvertido: clienteId }
+              ? { ...l, clienteIdConvertido: clienteId }
               : l
           ),
         }))
@@ -534,22 +846,28 @@ export const useDataStore = create<DataState>()(
 
       completeClientProfile: (clientId, data) => {
         set((state) => ({
-          clients: state.clients.map((c) =>
-            c.id === clientId
-              ? {
-                  ...c,
-                  cuit: data.cuit,
-                  razonSocial: data.razonSocial,
-                  direccion: data.direccion,
-                  ciudad: data.ciudad,
-                  provincia: data.provincia,
-                  codigoPostal: data.codigoPostal,
-                  telefono: data.telefono ?? c.telefono,
-                  profileCompleto: true,
-                  status: 'activa',
-                }
-              : c
-          ),
+          clients: state.clients.map((c) => {
+            if (c.id !== clientId) return c
+            // Crear la primera dirección guardada con los datos de envío
+            const primaryAddress: SavedAddress = {
+              id: generateId('ad'),
+              etiqueta: 'Local principal',
+              direccion: data.direccion,
+              ciudad: data.ciudad,
+              provincia: data.provincia,
+              codigoPostal: data.codigoPostal,
+              esPrincipal: true,
+            }
+            return {
+              ...c,
+              cuit: data.cuit,
+              razonSocial: data.razonSocial,
+              telefono: data.telefono ?? c.telefono,
+              addresses: c.addresses.length === 0 ? [primaryAddress] : c.addresses,
+              profileCompleto: true,
+              status: 'activa',
+            }
+          }),
         }))
       },
 
@@ -573,6 +891,104 @@ export const useDataStore = create<DataState>()(
         set((state) => ({ clients: [...state.clients, client] }))
       },
 
+      updateClient: (clientId, updates) => {
+        set((state) => ({
+          clients: state.clients.map((c) => (c.id === clientId ? { ...c, ...updates } : c)),
+        }))
+      },
+
+      reassignClient: (clientId, newSellerId) => {
+        set((state) => ({
+          clients: state.clients.map((c) =>
+            c.id === clientId ? { ...c, sellerId: newSellerId } : c
+          ),
+        }))
+      },
+
+      reassignClientsBulk: (fromSellerId, toSellerId) => {
+        const count = get().clients.filter((c) => c.sellerId === fromSellerId).length
+        set((state) => ({
+          clients: state.clients.map((c) =>
+            c.sellerId === fromSellerId ? { ...c, sellerId: toSellerId } : c
+          ),
+        }))
+        return count
+      },
+
+      resetClientPassword: (clientId) => {
+        // Genera password mock para mostrar al admin (en prod, se envía por email/WA)
+        const mockPassword = `B${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+        // En el demo no actualizamos DEMO_USERS porque están seedeados, pero retornamos el password
+        return mockPassword
+      },
+
+      // ── Client addresses ─────────────────────────────────────────────────
+      addClientAddress: (clientId, addr) => {
+        set((state) => ({
+          clients: state.clients.map((c) =>
+            c.id === clientId
+              ? {
+                  ...c,
+                  addresses: [
+                    ...c.addresses,
+                    {
+                      ...addr,
+                      id: generateId('ad'),
+                      // Si es la primera dirección, marcarla principal
+                      esPrincipal: c.addresses.length === 0 ? true : addr.esPrincipal,
+                    },
+                  ],
+                }
+              : c
+          ),
+        }))
+      },
+
+      updateClientAddress: (clientId, addrId, updates) => {
+        set((state) => ({
+          clients: state.clients.map((c) =>
+            c.id === clientId
+              ? {
+                  ...c,
+                  addresses: c.addresses.map((a) =>
+                    a.id === addrId ? { ...a, ...updates } : a
+                  ),
+                }
+              : c
+          ),
+        }))
+      },
+
+      deleteClientAddress: (clientId, addrId) => {
+        set((state) => ({
+          clients: state.clients.map((c) => {
+            if (c.id !== clientId) return c
+            const newAddresses = c.addresses.filter((a) => a.id !== addrId)
+            // Si borramos la principal, marcar la primera restante
+            if (newAddresses.length > 0 && !newAddresses.some((a) => a.esPrincipal)) {
+              newAddresses[0] = { ...newAddresses[0], esPrincipal: true }
+            }
+            return { ...c, addresses: newAddresses }
+          }),
+        }))
+      },
+
+      setClientAddressPrincipal: (clientId, addrId) => {
+        set((state) => ({
+          clients: state.clients.map((c) =>
+            c.id === clientId
+              ? {
+                  ...c,
+                  addresses: c.addresses.map((a) => ({
+                    ...a,
+                    esPrincipal: a.id === addrId,
+                  })),
+                }
+              : c
+          ),
+        }))
+      },
+
       // ── Products ─────────────────────────────────────────────────────────
       addProduct: (product) => {
         set((state) => ({
@@ -583,12 +999,10 @@ export const useDataStore = create<DataState>()(
 
       addProductsBulk: (newProducts) => {
         set((state) => {
-          // Crear ProductPrice por defecto en TODAS las listas existentes (precio mayorista = pvr/2)
           const newPrices = newProducts.flatMap((p) =>
             state.priceLists.map((pl) => ({
               productId: p.id,
               priceListId: pl.id,
-              // Precio sugerido por defecto: pvr / 2 (50% margen óptica), redondeado a 100
               precioArs: Math.round((p.pvr / 2) / 100) * 100,
             }))
           )
@@ -601,6 +1015,121 @@ export const useDataStore = create<DataState>()(
             productPrices: [...state.productPrices, ...newPrices],
           }
         })
+      },
+
+      updateProduct: (productId, updates) => {
+        set((state) => ({
+          products: state.products.map((p) => (p.id === productId ? { ...p, ...updates } : p)),
+        }))
+      },
+
+      setProductStatus: (productId, estado) => {
+        set((state) => ({
+          products: state.products.map((p) => (p.id === productId ? { ...p, estado } : p)),
+        }))
+      },
+
+      bulkUpdatePrices: (filter, pctIncrease) => {
+        const state = get()
+        const targetProductIds = filter.categoryId
+          ? state.products.filter((p) => p.categoryId === filter.categoryId).map((p) => p.id)
+          : state.products.map((p) => p.id)
+        const factor = 1 + pctIncrease / 100
+        set((s) => ({
+          productPrices: s.productPrices.map((pp) => {
+            if (!targetProductIds.includes(pp.productId)) return pp
+            if (filter.priceListId && pp.priceListId !== filter.priceListId) return pp
+            return { ...pp, precioArs: Math.round((pp.precioArs * factor) / 100) * 100 }
+          }),
+        }))
+      },
+
+      // ── Categories ───────────────────────────────────────────────────────
+      addCategory: (cat) => {
+        set((state) => ({
+          categories: [...state.categories, { ...cat, id: generateId('cat') }],
+        }))
+      },
+
+      updateCategory: (catId, updates) => {
+        set((state) => ({
+          categories: state.categories.map((c) => (c.id === catId ? { ...c, ...updates } : c)),
+        }))
+      },
+
+      deleteCategory: (catId) => {
+        const state = get()
+        const productsInCategory = state.products.filter((p) => p.categoryId === catId)
+        if (productsInCategory.length > 0) {
+          return {
+            ok: false,
+            reason: `No se puede eliminar: ${productsInCategory.length} producto(s) usan esta categoría.`,
+          }
+        }
+        set((s) => ({ categories: s.categories.filter((c) => c.id !== catId) }))
+        return { ok: true }
+      },
+
+      // ── Discount codes ───────────────────────────────────────────────────
+      addCoupon: (coupon) => {
+        set((state) => ({
+          discountCodes: [
+            ...state.discountCodes,
+            {
+              ...coupon,
+              id: generateId('d'),
+              usosActual: 0,
+              // Compat: si tipo es porcentaje, también setear `porcentaje` (legacy)
+              porcentaje: coupon.tipo === 'porcentaje' ? coupon.valor : undefined,
+            },
+          ],
+        }))
+      },
+
+      updateCoupon: (couponId, updates) => {
+        set((state) => ({
+          discountCodes: state.discountCodes.map((c) =>
+            c.id === couponId
+              ? {
+                  ...c,
+                  ...updates,
+                  porcentaje:
+                    updates.tipo === 'porcentaje' && updates.valor !== undefined
+                      ? updates.valor
+                      : updates.porcentaje ?? c.porcentaje,
+                }
+              : c
+          ),
+        }))
+      },
+
+      deleteCoupon: (couponId) => {
+        set((state) => ({
+          discountCodes: state.discountCodes.filter((c) => c.id !== couponId),
+        }))
+      },
+
+      validateCoupon: (codigo) => {
+        const state = get()
+        const c = state.discountCodes.find((d) => d.codigo.toLowerCase() === codigo.toLowerCase())
+        if (!c) return null
+        if (!c.activo) return null
+        if (c.usosActual >= c.usosMax) return null
+        if (c.fechaVencimiento && new Date(c.fechaVencimiento) < new Date()) return null
+        return c
+      },
+
+      // ── Settings ─────────────────────────────────────────────────────────
+      updateSettings: (updates) => {
+        set((state) => ({ settings: { ...state.settings, ...updates } }))
+      },
+
+      getNextRemitoNumber: () => {
+        const next = get().settings.remitoProximoNumero
+        set((state) => ({
+          settings: { ...state.settings, remitoProximoNumero: state.settings.remitoProximoNumero + 1 },
+        }))
+        return next
       },
 
       // ── Representative requests ──────────────────────────────────────────
@@ -646,17 +1175,6 @@ export const useDataStore = create<DataState>()(
               : r
           ),
         }))
-      },
-
-      // ── Coupons ──────────────────────────────────────────────────────────
-      validateCoupon: (codigo) => {
-        const state = get()
-        const c = state.discountCodes.find((d) => d.codigo.toLowerCase() === codigo.toLowerCase())
-        if (!c) return null
-        if (!c.activo) return null
-        if (c.usosActual >= c.usosMax) return null
-        if (c.fechaVencimiento && new Date(c.fechaVencimiento) < new Date()) return null
-        return c
       },
 
       // ── Helpers / Derived ─────────────────────────────────────────────────
@@ -713,7 +1231,7 @@ export const useDataStore = create<DataState>()(
         const sorted = [...product.substitutes].sort((a, b) => a.preferenceOrder - b.preferenceOrder)
         return sorted
           .map((s) => state.products.find((p) => p.id === s.substituteProductId))
-          .filter((p): p is Product => Boolean(p))
+          .filter((p): p is Product => p !== undefined && p.estado !== 'archivado')
       },
 
       getClientPendingOrders: (clientId) => {
@@ -722,15 +1240,16 @@ export const useDataStore = create<DataState>()(
         )
       },
 
+      // 'bonificado' y 'resuelto' cuentan como cerrados — apagan el aviso al vendedor
       hasOpenClaims: (clientId) => {
         return get().claims.some(
-          (c) => c.clienteId === clientId && c.estado !== 'resuelto'
+          (c) => c.clienteId === clientId && c.estado !== 'resuelto' && c.estado !== 'bonificado'
         )
       },
 
       getClientOpenClaims: (clientId) => {
         return get().claims.filter(
-          (c) => c.clienteId === clientId && c.estado !== 'resuelto'
+          (c) => c.clienteId === clientId && c.estado !== 'resuelto' && c.estado !== 'bonificado'
         )
       },
 
@@ -759,10 +1278,23 @@ export const useDataStore = create<DataState>()(
           return new Date(c.ultimaCompra).getTime() < cutoff
         })
       },
+
+      getReservasPreventa: () => {
+        return get().orders.filter((o) => o.estado === 'reserva_preventa')
+      },
+
+      getActiveProducts: () => {
+        return get().products.filter((p) => p.estado === 'activo')
+      },
+
+      getCatalogProducts: () => {
+        // Activos no preventa (preventa va al /preventas separado)
+        return get().products.filter((p) => p.estado === 'activo' && !p.preventa)
+      },
     }),
     {
       name: 'bianni-data',
-      version: 3,
+      version: 4,
       merge: (persisted, current) => ({
         ...(persisted as Partial<DataState>),
         ...current,
@@ -774,6 +1306,14 @@ export const useDataStore = create<DataState>()(
         sellers: SELLERS,
         assets: ASSETS,
         settings: SYSTEM_SETTINGS,
+        clients: CLIENTS,
+        claims: CLAIMS,
+        discountCodes: DISCOUNT_CODES,
+        accountMovements: ACCOUNT_MOVEMENTS,
+        orders: ORDERS,
+        orderHistory: ORDER_HISTORY,
+        stock: STOCK,
+        stockMovements: STOCK_MOVEMENTS,
       }),
     }
   )

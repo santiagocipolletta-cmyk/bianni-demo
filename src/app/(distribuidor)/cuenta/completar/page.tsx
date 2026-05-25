@@ -35,13 +35,14 @@ export default function CompletarCuentaPage() {
   // Pre-cargar lo que ya exista
   useEffect(() => {
     if (!client) return
+    const principal = client.addresses.find((a) => a.esPrincipal) ?? client.addresses[0]
     setForm((f) => ({
       cuit: client.cuit ?? f.cuit,
       razonSocial: client.razonSocial ?? f.razonSocial,
-      direccion: client.direccion ?? f.direccion,
-      ciudad: client.ciudad ?? f.ciudad,
-      provincia: client.provincia ?? f.provincia,
-      codigoPostal: client.codigoPostal ?? f.codigoPostal,
+      direccion: principal?.direccion ?? f.direccion,
+      ciudad: principal?.ciudad ?? client.ciudad ?? f.ciudad,
+      provincia: principal?.provincia ?? client.provincia ?? f.provincia,
+      codigoPostal: principal?.codigoPostal ?? f.codigoPostal,
     }))
   }, [client])
 

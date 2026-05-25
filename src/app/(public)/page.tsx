@@ -290,7 +290,7 @@ function PublicCatalogSection({ onLoginClick, selectedCat, onCategoryChange, sec
   const { products, categories } = useDataStore()
 
   // LOOKBOOK público: solo destacados y novedad — NO el catálogo completo
-  const activeProducts = products.filter((p) => p.active && (p.destacado || p.novedad))
+  const activeProducts = products.filter((p) => p.estado === 'activo' && (p.destacado || p.novedad))
   const visible =
     selectedCat === ALL_CAT
       ? activeProducts

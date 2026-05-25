@@ -82,8 +82,10 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   modificado: 'Modificado',
   rechazado: 'Rechazado',
   cancelado: 'Cancelado',
+  cancelacion_solicitada: 'Cancelación solicitada',
   despachado: 'Despachado',
   entregado: 'Entregado',
+  reserva_preventa: 'Reserva preventa',
 }
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
@@ -93,8 +95,10 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   modificado: 'bg-blue-950 text-blue-400',
   rechazado: 'bg-red-950 text-red-400',
   cancelado: 'bg-zinc-900 text-zinc-500',
+  cancelacion_solicitada: 'bg-orange-950 text-orange-400',
   despachado: 'bg-purple-950 text-purple-400',
   entregado: 'bg-teal-950 text-teal-400',
+  reserva_preventa: 'bg-indigo-950 text-indigo-400',
 }
 
 // Reclamos status labels
@@ -102,12 +106,27 @@ export const CLAIM_STATUS_LABELS = {
   recibido: 'Recibido',
   enviado_a_fabrica: 'Enviado a fábrica',
   resuelto: 'Resuelto',
+  bonificado: 'Bonificado/Saldado',
 } as const
 
 export const CLAIM_STATUS_COLORS = {
   recibido: 'bg-yellow-950 text-yellow-400',
   enviado_a_fabrica: 'bg-blue-950 text-blue-400',
   resuelto: 'bg-emerald-950 text-emerald-400',
+  bonificado: 'bg-teal-950 text-teal-400',
+} as const
+
+// Product status labels (tri-estado)
+export const PRODUCT_STATUS_LABELS = {
+  borrador: 'Borrador',
+  activo: 'Activo',
+  archivado: 'Archivado',
+} as const
+
+export const PRODUCT_STATUS_COLORS = {
+  borrador: 'bg-zinc-800 text-zinc-400',
+  activo: 'bg-emerald-950 text-emerald-400',
+  archivado: 'bg-red-950 text-red-400',
 } as const
 
 // Lead status labels

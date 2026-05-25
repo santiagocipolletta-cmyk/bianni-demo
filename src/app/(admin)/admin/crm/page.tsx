@@ -19,7 +19,7 @@ const ORIGENES_LABEL: Record<Lead['origen'], string> = {
 }
 
 export default function AdminCRMPage() {
-  const { leads, sellers, updateLeadStatus, assignLead, addLeadNote } = useDataStore()
+  const { leads, sellers, clients, updateLeadStatus, assignLead, addLeadNote, addClient, convertLead, addNotification } = useDataStore()
   const [view, setView] = useState<ViewMode>('embudo')
   const [filter, setFilter] = useState<LeadFilter>('todos')
   const [openedLead, setOpenedLead] = useState<string | null>(null)
@@ -52,6 +52,48 @@ export default function AdminCRMPage() {
   function handleAssign(leadId: string, sellerId: string) {
     assignLead(leadId, sellerId)
     toast.success('Lead asignado')
+  }
+
+  function handleCreateOpticaFromLead(lead: Lead) {
+    if (!lead.asignadoA) {
+      toast.error('Asigná un vendedor antes de crear la óptica')
+      return
+    }
+    if (lead.clienteIdConvertido) {
+      toast.info('Este lead ya tiene una óptica creada')
+      return
+    }
+    if (!confirm(`Crear óptica "${lead.nombreOptica ?? lead.nombre}" a partir de este lead?`)) return
+    const newClientId = `c_${Date.now()}`
+    addClient({
+      id: newClientId,
+      nombre: lead.nombreOptica ?? lead.nombre,
+      ciudad: lead.ciudad ?? '',
+      provincia: '',
+      plazoPagoDias: 30,
+      priceListId: 'pl1',
+      sellerId: lead.asignadoA,
+      telefono: lead.telefono,
+      email: lead.email,
+      addresses: [],
+      status: 'pendiente_datos',
+      profileCompleto: false,
+      verCuentaCorriente: true,
+      fechaAlta: new Date().toISOString(),
+      origenAlta: 'web',
+    })
+    // Vincula lead a cliente — NO marca convertido (eso pasa con primera venta)
+    convertLead(lead.id, newClientId)
+    // Notif al vendedor asignado
+    const sellerUserId = lead.asignadoA === 's1' ? 'u2' : lead.asignadoA === 's3' ? 'u4' : 'u2'
+    addNotification({
+      userId: sellerUserId,
+      tipo: 'alta_optica',
+      titulo: 'Nueva óptica creada desde lead',
+      mensaje: `${lead.nombreOptica ?? lead.nombre} (${lead.ciudad ?? '—'}). Pendiente de completar datos.`,
+      leida: false,
+    })
+    toast.success(`Óptica ${lead.nombreOptica ?? lead.nombre} creada. Lead vinculado — se marcará "convertido" al primera venta.`)
   }
 
   function handleAddNote(leadId: string) {
@@ -218,6 +260,38 @@ export default function AdminCRMPage() {
                   <div>
                     <p className="text-[10px] tracking-[0.2em] uppercase text-[#555] mb-1">Mensaje original</p>
                     <p className="text-[#A0A0A0] text-xs italic border-l-2 border-[#2A2A2A] pl-3">{lead.mensaje}</p>
+                  </div>
+                )}
+
+                {/* Crear óptica desde lead */}
+                {!lead.clienteIdConvertido ? (
+                  <div className="border border-emerald-900/40 bg-emerald-950/20 p-4">
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-emerald-400 mb-2">Convertir en óptica</p>
+                    <p className="text-xs text-emerald-100/70 leading-relaxed mb-3">
+                      Crea la óptica usando los datos del lead. Quedará en estado <span className="text-white">pendiente_datos</span> hasta que complete CUIT/dirección. El lead se vinculará automáticamente y se marcará <span className="text-white">convertido</span> con la primera venta.
+                    </p>
+                    <button
+                      onClick={() => handleCreateOpticaFromLead(lead)}
+                      disabled={!lead.asignadoA}
+                      className="border border-emerald-700 bg-emerald-900 text-white text-[10px] tracking-[0.15em] uppercase px-4 py-2 hover:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Crear óptica
+                    </button>
+                    {!lead.asignadoA && (
+                      <p className="text-[10px] text-yellow-400 mt-2">Asigná un vendedor primero</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="border border-blue-900/40 bg-blue-950/20 p-4">
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-blue-400 mb-1">Óptica creada</p>
+                    {(() => {
+                      const c = clients.find((cc) => cc.id === lead.clienteIdConvertido)
+                      return (
+                        <p className="text-xs text-blue-100">
+                          {c?.nombre ?? lead.clienteIdConvertido} · <span className="text-blue-400/70">{c?.status === 'pendiente_datos' ? 'pendiente de datos' : c?.status}</span>
+                        </p>
+                      )
+                    })()}
                   </div>
                 )}
 

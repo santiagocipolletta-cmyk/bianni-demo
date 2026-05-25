@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Check, X, Mail, Phone, MapPin, Calendar, Building2, UserCheck } from 'lucide-react'
+import { Check, X, Mail, Phone, MapPin, Calendar, Building2, UserCheck, KeyRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDataStore } from '@/stores/data-store'
 import { useAuthStore } from '@/stores/auth-store'
@@ -30,10 +30,12 @@ export default function AdminRepresentantesPage() {
   const {
     representativeRequests,
     sellers,
+    clients,
     approveRepresentativeRequest,
     rejectRepresentativeRequest,
     addClient,
     addNotification,
+    resetClientPassword,
   } = useDataStore()
   const { user } = useAuthStore()
 
@@ -95,6 +97,7 @@ export default function AdminRepresentantesPage() {
       telefono: selected.telefono,
       email: selected.email,
       cuit: selected.cuit,
+      addresses: [],
       status: 'pendiente_datos',
       profileCompleto: false,
       verCuentaCorriente: true,
@@ -118,6 +121,26 @@ export default function AdminRepresentantesPage() {
       `Solicitud aprobada. Credenciales enviadas por WhatsApp (mock: ${selected.email} / ${mockPassword})`
     )
     closeDrawer()
+  }
+
+  async function handleResetClientPassword() {
+    if (!selected) return
+    // Búsqueda por email (no hay vínculo directo entre request y client)
+    const client = clients.find(
+      (c) => c.email.toLowerCase() === selected.email.toLowerCase()
+    )
+    if (!client) {
+      toast.error('No se encontró la óptica creada para esta solicitud')
+      return
+    }
+    if (!window.confirm(`¿Resetear la contraseña de ${client.nombre}?`)) return
+    const newPassword = resetClientPassword(client.id)
+    try {
+      await navigator.clipboard.writeText(newPassword)
+      toast.success(`Nueva contraseña: ${newPassword} — copiada al portapapeles`)
+    } catch {
+      toast.success(`Nueva contraseña: ${newPassword}`)
+    }
   }
 
   function handleReject() {
@@ -419,15 +442,24 @@ export default function AdminRepresentantesPage() {
                 )}
 
                 {selected.estado === 'aprobada' && selected.sellerIdAsignado && (
-                  <div className="border-t border-[#1A1A1A] pt-5">
-                    <p className="text-[10px] text-emerald-400 leading-relaxed">
-                      ✓ Aprobada por {selected.resueltaPor} ·{' '}
-                      {selected.resueltaEn && formatDate(selected.resueltaEn)}
-                    </p>
-                    <p className="text-[10px] text-[#A0A0A0] mt-1">
-                      Vendedor asignado:{' '}
-                      {sellers.find((s) => s.id === selected.sellerIdAsignado)?.nombre ?? '—'}
-                    </p>
+                  <div className="border-t border-[#1A1A1A] pt-5 space-y-4">
+                    <div>
+                      <p className="text-[10px] text-emerald-400 leading-relaxed">
+                        ✓ Aprobada por {selected.resueltaPor} ·{' '}
+                        {selected.resueltaEn && formatDate(selected.resueltaEn)}
+                      </p>
+                      <p className="text-[10px] text-[#A0A0A0] mt-1">
+                        Vendedor asignado:{' '}
+                        {sellers.find((s) => s.id === selected.sellerIdAsignado)?.nombre ?? '—'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleResetClientPassword}
+                      className="w-full flex items-center justify-center gap-1.5 border border-[#2A2A2A] text-[#A0A0A0] hover:text-white hover:border-[#444] text-[10px] tracking-[0.15em] uppercase px-3 py-2.5 transition-colors"
+                    >
+                      <KeyRound size={12} strokeWidth={1.5} />
+                      Reset password de esta óptica
+                    </button>
                   </div>
                 )}
 

@@ -21,7 +21,7 @@ export default function PreventasPage() {
   const priceList = client ? getClientPriceList(client.id) : null
   const priceListId = priceList?.id ?? 'pl1'
 
-  const preventaProducts = products.filter((p) => p.preventa && p.active)
+  const preventaProducts = products.filter((p) => p.preventa && p.estado === 'activo')
   const cartCount = getTotalUnidades()
 
   // Bloqueo si profile incompleto
@@ -99,6 +99,22 @@ export default function PreventasPage() {
                     <p className="text-[9px] tracking-[0.2em] uppercase text-emerald-400 mb-1">{cat?.name ?? '—'}</p>
                     <h3 className="text-sm text-white font-light mb-1 leading-snug">{product.name}</h3>
                     <p className="text-[10px] text-[#555] leading-relaxed mb-4 line-clamp-2 flex-1">{product.description}</p>
+
+                    {/* Cupo de preventa (si está definido) */}
+                    {product.cupoPreventa && product.cupoPreventa > 0 && (
+                      <div className="mb-3">
+                        <p className="text-[8px] tracking-[0.2em] uppercase text-[#666] mb-1">
+                          Cupo disponible
+                        </p>
+                        <div className="h-1 bg-[#1A1A1A] overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500 transition-all"
+                            style={{ width: '60%' }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-end justify-between gap-2 mt-auto">
                       <div>
                         <p className="text-[8px] tracking-[0.25em] uppercase text-[#555]">Mayorista</p>

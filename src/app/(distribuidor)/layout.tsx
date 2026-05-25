@@ -20,6 +20,7 @@ import {
   X,
   Sparkles,
   AlertTriangle,
+  MapPin,
 } from 'lucide-react'
 
 const NAV_LINKS = [
@@ -27,6 +28,7 @@ const NAV_LINKS = [
   { href: '/preventas', label: 'Preventa', icon: Sparkles },
   { href: '/pedidos', label: 'Mis Pedidos', icon: ShoppingCart },
   { href: '/cuenta', label: 'Cuenta Corriente', icon: CreditCard },
+  { href: '/cuenta/direcciones', label: 'Mis direcciones', icon: MapPin },
   { href: '/reclamos', label: 'Garantía', icon: MessageSquareWarning },
   { href: '/contenido', label: 'Contenido', icon: FolderOpen },
 ]
@@ -48,7 +50,11 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-6 space-y-1">
         {NAV_LINKS.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href || pathname.startsWith(href + '/')
+          // /cuenta no debe marcarse activo cuando estamos en /cuenta/direcciones
+          const isExact = pathname === href
+          const isNested = pathname.startsWith(href + '/')
+          const hasMoreSpecific = NAV_LINKS.some((l) => l.href !== href && l.href.startsWith(href + '/'))
+          const isActive = isExact || (isNested && !hasMoreSpecific)
           return (
             <Link
               key={href}

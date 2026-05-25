@@ -1,16 +1,42 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Package } from 'lucide-react'
+import { ArrowLeft, Package, XCircle } from 'lucide-react'
 import { useDataStore } from '@/stores/data-store'
+import { useAuthStore } from '@/stores/auth-store'
 import { cn, formatARS, formatDate, formatDateTime, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export default function PedidoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params)
-  const { getOrderWithDetails, products } = useDataStore()
+  const { getOrderWithDetails, products, requestOrderCancellation, addNotification } = useDataStore()
+  const { user } = useAuthStore()
+  const [cancelMotivo, setCancelMotivo] = useState('')
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
 
   const order = getOrderWithDetails(id)
+
+  function handleRequestCancellation() {
+    if (!order) return
+    if (!cancelMotivo.trim()) {
+      toast.error('Indicá un motivo para cancelar')
+      return
+    }
+    requestOrderCancellation(order.id, cancelMotivo.trim(), user?.name ?? 'Cliente')
+    // Notif al admin
+    addNotification({
+      userId: 'u3',
+      tipo: 'cancelacion_solicitada',
+      titulo: `Cancelación solicitada — ${order.codigo}`,
+      mensaje: `${order.cliente?.nombre ?? 'Cliente'} pidió cancelar el pedido ${order.codigo}. Motivo: ${cancelMotivo.trim()}`,
+      leida: false,
+      orderId: order.id,
+    })
+    toast.success('Solicitud de cancelación enviada. El admin la confirmará en breve.')
+    setShowCancelDialog(false)
+    setCancelMotivo('')
+  }
 
   if (!order) {
     return (
@@ -86,6 +112,63 @@ export default function PedidoDetailPage({ params }: { params: Promise<{ id: str
                 <p className="text-[9px] tracking-[0.2em] uppercase text-red-500 mb-2">Motivo de rechazo</p>
                 <p className="text-red-300 text-sm font-light leading-relaxed">{order.motivoRechazo}</p>
               </div>
+            )}
+
+            {/* Cancelación solicitada — esperando confirmación admin */}
+            {order.estado === 'cancelacion_solicitada' && order.cancelacionMotivo && (
+              <div className="border border-orange-900/50 bg-orange-950/20 px-5 py-4">
+                <p className="text-[9px] tracking-[0.2em] uppercase text-orange-400 mb-2">
+                  Cancelación solicitada — esperando confirmación
+                </p>
+                <p className="text-orange-200 text-sm font-light leading-relaxed">{order.cancelacionMotivo}</p>
+                {order.cancelacionSolicitadaEn && (
+                  <p className="text-orange-400/60 text-[10px] mt-2">
+                    Enviada el {formatDateTime(order.cancelacionSolicitadaEn)}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Botón solicitar cancelación — solo si pendiente_revision */}
+            {order.estado === 'pendiente_revision' && (
+              <>
+                {!showCancelDialog ? (
+                  <button
+                    onClick={() => setShowCancelDialog(true)}
+                    className="self-start flex items-center gap-1.5 border border-red-900 text-red-400 text-[10px] tracking-[0.15em] uppercase px-3 py-2 hover:bg-red-950/40 transition-colors"
+                  >
+                    <XCircle size={12} /> Solicitar cancelación
+                  </button>
+                ) : (
+                  <div className="border border-red-900/50 bg-red-950/10 px-5 py-4 space-y-3">
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-red-400">Solicitar cancelación</p>
+                    <p className="text-xs text-red-200/70 leading-relaxed">
+                      El admin debe confirmar la cancelación. Hasta entonces, el pedido permanece pendiente.
+                    </p>
+                    <textarea
+                      value={cancelMotivo}
+                      onChange={(e) => setCancelMotivo(e.target.value)}
+                      placeholder="¿Por qué querés cancelar?"
+                      rows={3}
+                      className="w-full bg-[#0A0A0A] border border-red-900/40 text-white text-sm px-3 py-2 focus:outline-none focus:border-red-500 placeholder:text-[#555]"
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => { setShowCancelDialog(false); setCancelMotivo('') }}
+                        className="border border-[#2A2A2A] text-[#A0A0A0] text-[10px] tracking-[0.15em] uppercase px-3 py-2 hover:bg-[#1A1A1A]"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleRequestCancellation}
+                        className="border border-red-700 bg-red-900 text-white text-[10px] tracking-[0.15em] uppercase px-3 py-2 hover:bg-red-800"
+                      >
+                        Enviar solicitud
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Admin notes */}

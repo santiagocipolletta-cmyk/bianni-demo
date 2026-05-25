@@ -18,7 +18,7 @@ export default function ColeccionPage() {
   const [photoIdx, setPhotoIdx] = useState(0)
 
   const featured = useMemo(
-    () => products.filter((p) => p.active && (p.destacado || p.novedad || p.badge === 'NUEVO')),
+    () => products.filter((p) => p.estado === 'activo' && (p.destacado || p.novedad || p.badge === 'NUEVO')),
     [products]
   )
 

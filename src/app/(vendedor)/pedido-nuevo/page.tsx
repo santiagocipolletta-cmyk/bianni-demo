@@ -75,7 +75,7 @@ function PedidoNuevoContent() {
   const priceList = selectedClient ? getClientPriceList(selectedClient.id) : null
   const priceListId = priceList?.id ?? 'pl1'
 
-  const activeProducts = products.filter((p) => p.active)
+  const activeProducts = products.filter((p) => p.estado === 'activo')
   const visibleProducts =
     selectedCategory === ALL_CAT
       ? activeProducts
@@ -121,14 +121,19 @@ function PedidoNuevoContent() {
       fecha: new Date().toISOString(),
       plazoPagoDias: selectedClient.plazoPagoDias,
       tipoEntrega: 'envio',
-      direccionEnvio: selectedClient.direccion
-        ? {
-            direccion: selectedClient.direccion,
-            ciudad: selectedClient.ciudad,
-            provincia: selectedClient.provincia,
-            codigoPostal: selectedClient.codigoPostal ?? '',
-          }
-        : undefined,
+      direccionEnvio: (() => {
+        const principal = selectedClient.addresses.find((a) => a.esPrincipal) ?? selectedClient.addresses[0]
+        if (!principal) return undefined
+        return {
+          direccion: principal.direccion,
+          ciudad: principal.ciudad,
+          provincia: principal.provincia,
+          codigoPostal: principal.codigoPostal,
+          receptor: principal.receptor,
+          telefonoContacto: principal.telefonoContacto,
+        }
+      })(),
+      addressId: (selectedClient.addresses.find((a) => a.esPrincipal) ?? selectedClient.addresses[0])?.id,
     }
 
     addOrder(newOrder)

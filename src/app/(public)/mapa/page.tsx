@@ -21,13 +21,16 @@ export default function MapaPage() {
   const filteredOpticas = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return opticasActivas
-    return opticasActivas.filter((c) =>
-      c.nombre.toLowerCase().includes(q) ||
-      c.ciudad.toLowerCase().includes(q) ||
-      c.provincia.toLowerCase().includes(q) ||
-      (c.direccion ?? '').toLowerCase().includes(q) ||
-      (c.codigoPostal ?? '').toLowerCase().includes(q)
-    )
+    return opticasActivas.filter((c) => {
+      const principal = c.addresses.find((a) => a.esPrincipal) ?? c.addresses[0]
+      return (
+        c.nombre.toLowerCase().includes(q) ||
+        c.ciudad.toLowerCase().includes(q) ||
+        c.provincia.toLowerCase().includes(q) ||
+        (principal?.direccion ?? '').toLowerCase().includes(q) ||
+        (principal?.codigoPostal ?? '').toLowerCase().includes(q)
+      )
+    })
   }, [opticasActivas, query])
 
   // Sugerencias rápidas — sacadas de la data
@@ -158,8 +161,9 @@ export default function MapaPage() {
                 </div>
               ) : (
                 filteredOpticas.map((c) => {
+                  const principal = c.addresses.find((a) => a.esPrincipal) ?? c.addresses[0]
                   const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    `${c.direccion ?? ''} ${c.ciudad} ${c.provincia} Argentina`
+                    `${principal?.direccion ?? ''} ${c.ciudad} ${c.provincia} Argentina`
                   )}`
                   return (
                     <a
@@ -177,11 +181,11 @@ export default function MapaPage() {
                           <p className="text-[10px] tracking-[0.15em] uppercase text-zinc-500 mt-1">
                             {c.ciudad} · {c.provincia}
                           </p>
-                          {c.direccion && (
+                          {principal?.direccion && (
                             <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
-                              {c.direccion}
-                              {c.codigoPostal && (
-                                <span className="text-zinc-600"> · {c.codigoPostal}</span>
+                              {principal.direccion}
+                              {principal.codigoPostal && (
+                                <span className="text-zinc-600"> · {principal.codigoPostal}</span>
                               )}
                             </p>
                           )}

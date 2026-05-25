@@ -30,7 +30,7 @@ export default function CatalogoPage() {
   const priceListId = priceList?.id ?? 'pl1'
 
   // Excluir productos en preventa del catálogo regular
-  const activeProducts = products.filter((p) => p.active && !p.preventa)
+  const activeProducts = products.filter((p) => p.estado === 'activo' && !p.preventa)
   const visibleProducts =
     selectedCategory === ALL_CAT
       ? activeProducts
