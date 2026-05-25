@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useDataStore } from '@/stores/data-store'
-import { formatARS } from '@/lib/utils'
+import { formatARS, normalizeText } from '@/lib/utils'
 import { ArrowUpDown, Search, X, MessageCircle, Calendar, AlertTriangle, TrendingDown, Wallet } from 'lucide-react'
 import type { Client, AccountMovement } from '@/types'
 
@@ -66,12 +66,12 @@ export default function CobranzasPage() {
 
   // Filtrar por query
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = normalizeText(query.trim())
     if (!q) return enriched
     return enriched.filter((e) =>
-      e.client.nombre.toLowerCase().includes(q) ||
-      e.client.ciudad.toLowerCase().includes(q) ||
-      e.client.provincia.toLowerCase().includes(q)
+      normalizeText(e.client.nombre).includes(q) ||
+      normalizeText(e.client.ciudad).includes(q) ||
+      normalizeText(e.client.provincia).includes(q)
     )
   }, [enriched, query])
 

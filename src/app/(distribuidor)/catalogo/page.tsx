@@ -10,7 +10,7 @@ import { useDataStore } from '@/stores/data-store'
 import { useCartStore } from '@/stores/cart-store'
 import { CartDrawer } from '@/components/cart/CartDrawer'
 import { ProductDetailModal } from '@/components/catalog/ProductDetailModal'
-import { formatARS, cn } from '@/lib/utils'
+import { formatARS, cn, normalizeText } from '@/lib/utils'
 import type { Product } from '@/types'
 
 const ALL_CAT = 'all'
@@ -59,11 +59,11 @@ export default function CatalogoPage() {
     return activeProducts.filter((p) => {
       // Categoría
       if (selectedCategory !== ALL_CAT && p.categoryId !== selectedCategory) return false
-      // Búsqueda por nombre/SKU
-      if (search.trim()) {
-        const q = search.toLowerCase()
-        const matchName = p.name.toLowerCase().includes(q)
-        const matchSku  = p.sku.toLowerCase().includes(q)
+      // Búsqueda por nombre/SKU (insensible a tildes y mayúsculas)
+      const q = normalizeText(search.trim())
+      if (q) {
+        const matchName = normalizeText(p.name).includes(q)
+        const matchSku  = normalizeText(p.sku).includes(q)
         if (!matchName && !matchSku) return false
       }
       // Color

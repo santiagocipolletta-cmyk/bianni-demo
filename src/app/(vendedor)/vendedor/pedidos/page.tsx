@@ -15,6 +15,7 @@ import {
   formatARS,
   formatDate,
   formatDateTime,
+  normalizeText,
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 } from '@/lib/utils'
@@ -85,13 +86,13 @@ export default function VendedorPedidosPage() {
     if (statesFilter) {
       result = result.filter((o) => statesFilter.includes(o.estado))
     }
-    if (search.trim()) {
-      const q = search.toLowerCase()
+    const q = normalizeText(search.trim())
+    if (q) {
       result = result.filter((o) => {
         const client = clients.find((c) => c.id === o.clienteId)
         return (
-          o.codigo.toLowerCase().includes(q) ||
-          (client?.nombre.toLowerCase().includes(q) ?? false)
+          normalizeText(o.codigo).includes(q) ||
+          normalizeText(client?.nombre).includes(q)
         )
       })
     }

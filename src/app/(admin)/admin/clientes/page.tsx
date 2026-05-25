@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useDataStore } from '@/stores/data-store'
-import { cn } from '@/lib/utils'
+import { cn, normalizeText } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Pause, Play, Search, KeyRound, Users, X, ArrowRight, MapPin, Star } from 'lucide-react'
 import type { Client } from '@/types'
@@ -52,13 +52,13 @@ export default function AdminClientesPage() {
   const filtered = useMemo(() => {
     let result = clients
     if (filter !== 'todas') result = result.filter((c) => c.status === filter)
-    if (search) {
-      const q = search.toLowerCase()
+    const q = normalizeText(search.trim())
+    if (q) {
       result = result.filter((c) =>
-        c.nombre.toLowerCase().includes(q) ||
-        c.ciudad.toLowerCase().includes(q) ||
-        c.cuit?.includes(q) ||
-        c.email.toLowerCase().includes(q)
+        normalizeText(c.nombre).includes(q) ||
+        normalizeText(c.ciudad).includes(q) ||
+        (c.cuit?.includes(q) ?? false) ||
+        normalizeText(c.email).includes(q)
       )
     }
     return result

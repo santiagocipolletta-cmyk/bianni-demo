@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { useDataStore } from '@/stores/data-store'
 import { useCartStore } from '@/stores/cart-store'
-import { formatARS, cn } from '@/lib/utils'
+import { formatARS, cn, normalizeText } from '@/lib/utils'
 import type { Order } from '@/types'
 
 const ALL_CAT = 'all'
@@ -52,12 +52,12 @@ function PedidoNuevoContent() {
   const myClients = clients.filter((c) => c.sellerId === sellerId)
 
   const filteredClients = useMemo(() => {
-    const q = clientQuery.trim().toLowerCase()
+    const q = normalizeText(clientQuery.trim())
     if (!q) return myClients
     return myClients.filter((c) =>
-      c.nombre.toLowerCase().includes(q) ||
-      (c.ciudad ?? '').toLowerCase().includes(q) ||
-      (c.provincia ?? '').toLowerCase().includes(q)
+      normalizeText(c.nombre).includes(q) ||
+      normalizeText(c.ciudad).includes(q) ||
+      normalizeText(c.provincia).includes(q)
     )
   }, [myClients, clientQuery])
 
@@ -101,9 +101,9 @@ function PedidoNuevoContent() {
   const visibleProducts = useMemo(() => {
     return activeProducts.filter((p) => {
       if (selectedCategory !== ALL_CAT && p.categoryId !== selectedCategory) return false
-      if (productSearch.trim()) {
-        const q = productSearch.toLowerCase()
-        if (!p.name.toLowerCase().includes(q) && !p.sku.toLowerCase().includes(q)) return false
+      const qProd = normalizeText(productSearch.trim())
+      if (qProd) {
+        if (!normalizeText(p.name).includes(qProd) && !normalizeText(p.sku).includes(qProd)) return false
       }
       if (filterColor && p.color !== filterColor) return false
       if (filterMaterial && p.material !== filterMaterial) return false

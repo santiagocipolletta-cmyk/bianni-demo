@@ -6,6 +6,7 @@ import { motion } from 'motion/react'
 import { Search, MapPin, ArrowLeft, ExternalLink } from 'lucide-react'
 import { Logo } from '@/components/brand/Logo'
 import { useDataStore } from '@/stores/data-store'
+import { normalizeText } from '@/lib/utils'
 
 export default function MapaPage() {
   const { clients } = useDataStore()
@@ -19,16 +20,16 @@ export default function MapaPage() {
 
   // Búsqueda libre: nombre, ciudad, provincia, dirección, código postal
   const filteredOpticas = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = normalizeText(query.trim())
     if (!q) return opticasActivas
     return opticasActivas.filter((c) => {
       const principal = c.addresses.find((a) => a.esPrincipal) ?? c.addresses[0]
       return (
-        c.nombre.toLowerCase().includes(q) ||
-        c.ciudad.toLowerCase().includes(q) ||
-        c.provincia.toLowerCase().includes(q) ||
-        (principal?.direccion ?? '').toLowerCase().includes(q) ||
-        (principal?.codigoPostal ?? '').toLowerCase().includes(q)
+        normalizeText(c.nombre).includes(q) ||
+        normalizeText(c.ciudad).includes(q) ||
+        normalizeText(c.provincia).includes(q) ||
+        normalizeText(principal?.direccion).includes(q) ||
+        normalizeText(principal?.codigoPostal).includes(q)
       )
     })
   }, [opticasActivas, query])

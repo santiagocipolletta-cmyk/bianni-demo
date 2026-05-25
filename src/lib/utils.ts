@@ -6,6 +6,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Normaliza un string para búsquedas: minúsculas + sin tildes/diacríticos.
+ * Ej: "Óptica Vélez" → "optica velez"
+ *
+ * Permite que el usuario escriba "opticas" y matchee tanto "ópticas" como "opticas".
+ * Usado en TODOS los buscadores de la app (catálogo, clientes, pedidos, mapa, etc).
+ *
+ * Implementación: NFD descompone caracteres en base + diacrítico, luego se filtran
+ * los diacríticos del rango Unicode U+0300–U+036F.
+ */
+export function normalizeText(s: string | null | undefined): string {
+  if (!s) return ''
+  return s
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+}
+
 // Formatear precio ARS
 export function formatARS(amount: number): string {
   return new Intl.NumberFormat('es-AR', {

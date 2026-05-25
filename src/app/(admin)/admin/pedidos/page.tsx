@@ -8,6 +8,7 @@ import {
   cn,
   formatARS,
   formatDate,
+  normalizeText,
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 } from '@/lib/utils'
@@ -121,14 +122,14 @@ export default function AdminPedidosPage() {
     [sellers]
   )
 
-  // Filter by search (order code or client name)
+  // Filter by search (order code or client name) — insensible a tildes/mayúsculas
   const filteredOrders = useMemo(() => {
-    const q = search.toLowerCase().trim()
+    const q = normalizeText(search.trim())
     return orders
       .filter((o) => {
         if (!q) return true
-        const clientName = (clientMap[o.clienteId] ?? '').toLowerCase()
-        return o.codigo.toLowerCase().includes(q) || clientName.includes(q)
+        const clientName = normalizeText(clientMap[o.clienteId])
+        return normalizeText(o.codigo).includes(q) || clientName.includes(q)
       })
       .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
   }, [orders, search, clientMap])
