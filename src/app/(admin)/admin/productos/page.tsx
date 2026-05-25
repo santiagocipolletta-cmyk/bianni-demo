@@ -335,11 +335,19 @@ export default function AdminProductosPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-3xl text-white tracking-[0.05em]">PRODUCTOS</h1>
-        <p className="text-[#555] text-xs tracking-[0.15em] uppercase mt-1">
-          {products.length} productos en catálogo
-        </p>
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-display text-3xl text-white tracking-[0.05em]">PRODUCTOS</h1>
+          <p className="text-[#555] text-xs tracking-[0.15em] uppercase mt-1">
+            {products.length} productos en catálogo
+          </p>
+        </div>
+        <a
+          href="/admin/productos/importar"
+          className="flex items-center gap-2 border border-[#2A2A2A] text-[#A0A0A0] hover:border-white hover:text-white text-[10px] tracking-[0.15em] uppercase px-4 py-2.5 transition-colors"
+        >
+          <Plus size={12} /> Importar CSV
+        </a>
       </div>
 
       {/* Table */}

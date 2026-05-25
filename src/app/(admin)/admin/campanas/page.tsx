@@ -5,6 +5,7 @@ import { useDataStore } from '@/stores/data-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn, formatDateTime } from '@/lib/utils'
 import { toast } from 'sonner'
+import { Construction } from 'lucide-react'
 import type { Campaign } from '@/types'
 
 type Segmento = 'todos' | 'ciudad' | 'vendedor'
@@ -54,6 +55,8 @@ export default function AdminCampanasPage() {
       toast.error('Completá nombre y mensaje')
       return
     }
+    // ⚠️ FASE 2 — el envío real requiere API oficial de WhatsApp Business (Meta).
+    // En la demo se guarda como borrador para mostrar que la UI está lista.
     addCampaign({
       nombre: nombre.trim(),
       mensaje: preview,
@@ -62,9 +65,9 @@ export default function AdminCampanasPage() {
       destinatariosCount,
       fechaEnvio: new Date().toISOString(),
       enviadaPor: user?.name ?? 'Admin',
-      estado: 'enviada',
+      estado: 'borrador',
     })
-    toast.success(`Campaña enviada a ${destinatariosCount} clientes (demo)`)
+    toast.info('Campaña guardada como borrador. El envío real estará disponible en FASE 2 (requiere API Meta).')
     setNombre('')
     setMensaje('')
     setSegmento('todos')
@@ -92,6 +95,22 @@ export default function AdminCampanasPage() {
       <div className="mb-6">
         <h1 className="font-display text-3xl text-white tracking-[0.05em]">CAMPAÑAS</h1>
         <p className="text-[#555] text-xs tracking-[0.15em] uppercase mt-1">Mensajes WhatsApp masivos</p>
+      </div>
+
+      {/* FASE 2 banner */}
+      <div className="mb-6 border border-yellow-800 bg-yellow-950/30 p-4 flex items-start gap-3">
+        <Construction size={16} className="text-yellow-400 mt-0.5 flex-shrink-0" />
+        <div className="text-xs leading-relaxed">
+          <p className="text-yellow-300 font-medium tracking-[0.1em] uppercase text-[10px] mb-1">
+            Disponible en Fase 2
+          </p>
+          <p className="text-yellow-100/80">
+            El envío real de campañas requiere la <span className="text-white">API oficial de WhatsApp Business (Meta)</span>,
+            cuya verificación lleva semanas de trámite y tiene costo por mensaje (~USD 0,05–0,06).
+            <span className="text-white"> La UI ya está lista</span>: podés componer mensajes y guardarlos como borrador.
+            En producción se conectará al envío real.
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">

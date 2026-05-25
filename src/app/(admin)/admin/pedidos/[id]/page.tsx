@@ -534,6 +534,22 @@ export default function AdminPedidoDetailPage({
                 </button>
               )}
 
+              {/* Notificar por WhatsApp cuando aceptado */}
+              {order.estado === 'aceptado' && order.cliente?.telefono && (() => {
+                const msg = `¡Tu pedido *${order.codigo}* fue confirmado! 🎉%0A%0ATe llevamos ${order.items.reduce((s, i) => s + i.cantidad, 0)} unidades.%0ATe avisamos cuando salga el despacho.%0A%0A— BIANNI Eyewear`
+                const tel = order.cliente.telefono.replace(/\D/g, '')
+                return (
+                  <a
+                    href={`https://wa.me/${tel}?text=${msg}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs tracking-[0.15em] uppercase px-4 py-3 font-medium transition-colors"
+                  >
+                    Notificar a la óptica por WhatsApp
+                  </a>
+                )
+              })()}
+
               {/* Remito — disponible desde aceptado en adelante */}
               {['aceptado', 'despachado', 'entregado'].includes(order.estado) && (
                 <Link

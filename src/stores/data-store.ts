@@ -120,6 +120,10 @@ interface DataState {
   removeAsset: (assetId: string) => void
   incrementAssetDownload: (assetId: string, userId: string) => void
 
+  // Products
+  addProduct: (product: Product) => void
+  addProductsBulk: (products: Product[]) => void
+
   // Clients
   updateClientStatus: (clientId: string, status: Client['status']) => void
   completeClientProfile: (clientId: string, data: ProfileCompletionData) => void
@@ -567,6 +571,36 @@ export const useDataStore = create<DataState>()(
 
       addClient: (client) => {
         set((state) => ({ clients: [...state.clients, client] }))
+      },
+
+      // ── Products ─────────────────────────────────────────────────────────
+      addProduct: (product) => {
+        set((state) => ({
+          products: [...state.products, product],
+          stock: [...state.stock, { productId: product.id, disponible: 0, reservado: 0 }],
+        }))
+      },
+
+      addProductsBulk: (newProducts) => {
+        set((state) => {
+          // Crear ProductPrice por defecto en TODAS las listas existentes (precio mayorista = pvr/2)
+          const newPrices = newProducts.flatMap((p) =>
+            state.priceLists.map((pl) => ({
+              productId: p.id,
+              priceListId: pl.id,
+              // Precio sugerido por defecto: pvr / 2 (50% margen óptica), redondeado a 100
+              precioArs: Math.round((p.pvr / 2) / 100) * 100,
+            }))
+          )
+          return {
+            products: [...state.products, ...newProducts],
+            stock: [
+              ...state.stock,
+              ...newProducts.map((p) => ({ productId: p.id, disponible: 0, reservado: 0 })),
+            ],
+            productPrices: [...state.productPrices, ...newPrices],
+          }
+        })
       },
 
       // ── Representative requests ──────────────────────────────────────────
