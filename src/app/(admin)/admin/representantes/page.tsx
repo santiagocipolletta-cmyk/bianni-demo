@@ -166,10 +166,10 @@ export default function AdminRepresentantesPage() {
       {/* Header */}
       <div>
         <h1 className="font-display text-3xl text-white tracking-[0.05em] uppercase">
-          Solicitudes de representante
+          Alta de Ópticas
         </h1>
         <p className="text-[#555] text-xs tracking-[0.15em] uppercase mt-1">
-          Bandeja de entrada — ópticas que pidieron sumarse a BIANNI
+          Solicitudes de representación recibidas desde la web — revisá, aprobá y creá el cliente
         </p>
       </div>
 
