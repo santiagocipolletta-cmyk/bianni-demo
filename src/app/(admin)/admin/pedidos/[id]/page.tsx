@@ -38,15 +38,18 @@ export default function AdminPedidoDetailPage({
 }) {
   const { id } = React.use(params)
 
-  const { getOrderWithDetails, updateOrderStatus, updateOrderItems, decrementStock, releaseStock, addNotification, products, confirmOrderCancellation, updateOrderPlazoPago, replaceOrderItems, sellers, clients } =
-    useDataStore()
+  const {
+    getOrderWithDetails, updateOrderStatus, updateOrderItems, decrementStock, releaseStock,
+    addNotification, products, confirmOrderCancellation, updateOrderPlazoPago, replaceOrderItems,
+    sellers, clients, addOrderInternalNote,
+  } = useDataStore()
   const { user } = useAuthStore()
 
   const [editMode, setEditMode] = useState(false)
   const [editableItems, setEditableItems] = useState<EditableItem[]>([])
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [motivoRechazo, setMotivoRechazo] = useState('')
-  const [adminNota, setAdminNota] = useState<string | null>(null)
+  const [noteText, setNoteText] = useState('')
 
   const order = getOrderWithDetails(id)
 
@@ -73,7 +76,16 @@ export default function AdminPedidoDetailPage({
     )
   }
 
-  const notaActual = adminNota !== null ? adminNota : (order.notasAdmin ?? '')
+  function handleAddNote() {
+    if (!order || !noteText.trim()) return
+    addOrderInternalNote(order.id, {
+      texto: noteText.trim(),
+      autorNombre: userName,
+      autorRol: 'admin',
+    })
+    setNoteText('')
+    toast.success('Nota interna agregada')
+  }
 
   // Picking counter
   const pickedCount = order.items.filter((i) => i.picked).length
@@ -377,18 +389,65 @@ export default function AdminPedidoDetailPage({
             </div>
           )}
 
-          {/* Notas admin */}
+          {/* Notas internas — canal admin↔vendedor (no visibles al cliente) */}
           <div className="border border-[#2A2A2A] bg-[#0A0A0A] px-4 py-4">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-[#555] mb-2">
-              Notas internas
+            <p className="text-[10px] tracking-[0.2em] uppercase text-[#555] mb-3">
+              Notas internas <span className="text-[#444] normal-case tracking-normal">— admin + vendedor, no visibles al cliente</span>
             </p>
-            <textarea
-              value={notaActual}
-              onChange={(e) => setAdminNota(e.target.value)}
-              placeholder="Agregar notas internas del pedido..."
-              rows={3}
-              className="w-full bg-transparent text-[#A0A0A0] text-sm resize-none placeholder:text-[#333] focus:outline-none focus:text-white transition-colors"
-            />
+
+            {/* Legacy notasAdmin: solo mostrar si tiene contenido */}
+            {order.notasAdmin && order.notasAdmin.trim() && (
+              <div className="border border-[#2A2A2A] bg-[#0F0F0F] p-3 mb-2">
+                <p className="text-[9px] tracking-[0.15em] uppercase text-[#666] mb-1">Nota previa (legacy)</p>
+                <p className="text-xs text-[#A0A0A0] whitespace-pre-line">{order.notasAdmin}</p>
+              </div>
+            )}
+
+            {(order.notasInternas?.length ?? 0) === 0 && !order.notasAdmin ? (
+              <p className="text-[11px] text-[#555] italic mb-3">Sin notas internas todavía.</p>
+            ) : (
+              <div className="space-y-2 mb-3">
+                {(order.notasInternas ?? []).map((n) => (
+                  <div
+                    key={n.id}
+                    className={cn(
+                      'border p-3 text-xs',
+                      n.autorRol === 'admin'
+                        ? 'border-blue-900/40 bg-blue-950/20'
+                        : 'border-orange-900/40 bg-orange-950/10'
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className={cn(
+                        'text-[9px] tracking-[0.15em] uppercase font-medium',
+                        n.autorRol === 'admin' ? 'text-blue-400' : 'text-orange-400'
+                      )}>
+                        {n.autorNombre} · {n.autorRol}
+                      </p>
+                      <p className="text-[9px] text-[#555]">{formatDateTime(n.createdAt)}</p>
+                    </div>
+                    <p className="text-white text-xs leading-relaxed whitespace-pre-line">{n.texto}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <textarea
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="Agregar nueva nota interna..."
+                rows={2}
+                className="flex-1 bg-transparent border border-[#2A2A2A] text-white text-xs px-3 py-2 resize-none placeholder:text-[#444] focus:outline-none focus:border-[#555]"
+              />
+              <button
+                onClick={handleAddNote}
+                disabled={!noteText.trim()}
+                className="border border-blue-700 text-blue-400 bg-blue-950/30 text-[10px] tracking-[0.15em] uppercase px-3 hover:bg-blue-900/40 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+              >
+                Agregar
+              </button>
+            </div>
           </div>
 
           {/* Items table */}

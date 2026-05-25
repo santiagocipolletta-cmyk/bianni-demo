@@ -19,15 +19,17 @@ import {
   X,
   AlertCircle,
   DollarSign,
+  ClipboardList,
 } from 'lucide-react'
 
 const NAV_LINKS = [
-  { href: '/dashboard', label: 'Dashboard', icon: BarChart2 },
-  { href: '/clientes', label: 'Mis Clientes', icon: Users },
-  { href: '/pedido-nuevo', label: 'Nuevo Pedido', icon: ShoppingBag },
-  { href: '/codigos', label: 'Códigos', icon: Tag },
-  { href: '/vendedor/reclamos', label: 'Reclamos', icon: AlertCircle },
-  { href: '/vendedor/comisiones', label: 'Mis Comisiones', icon: DollarSign },
+  { href: '/dashboard',          label: 'Dashboard',      icon: BarChart2     },
+  { href: '/clientes',           label: 'Mis Clientes',   icon: Users         },
+  { href: '/vendedor/pedidos',   label: 'Mis Pedidos',    icon: ClipboardList },
+  { href: '/pedido-nuevo',       label: 'Nuevo Pedido',   icon: ShoppingBag   },
+  { href: '/codigos',            label: 'Códigos',        icon: Tag           },
+  { href: '/vendedor/reclamos',  label: 'Reclamos',       icon: AlertCircle   },
+  { href: '/vendedor/comisiones',label: 'Mis Comisiones', icon: DollarSign    },
 ]
 
 function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {

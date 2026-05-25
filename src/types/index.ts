@@ -220,6 +220,19 @@ export interface OrderItem {
   productoOriginalId?: string                // El producto que se reemplazó (si aplica)
 }
 
+/**
+ * Nota interna en un pedido — canal de comunicación admin ↔ vendedor.
+ * NO visible para el cliente. Se renderiza en /admin/pedidos/[id] y en el
+ * drawer del vendedor en /vendedor/pedidos.
+ */
+export interface InternalNote {
+  id: string
+  texto: string
+  autorNombre: string
+  autorRol: 'admin' | 'vendedor'
+  createdAt: string
+}
+
 export interface Order {
   id: string
   codigo: string                             // 'S-0001' = Solicitud, 'P-0001' = Pedido confirmado
@@ -239,7 +252,8 @@ export interface Order {
   // Observaciones (transportadora, pedidos especiales, bonificaciones)
   observaciones?: string
   motivoRechazo?: string
-  notasAdmin?: string                        // No visibles al cliente
+  notasAdmin?: string                        // @deprecated — usar notasInternas. Se mantiene por compatibilidad.
+  notasInternas?: InternalNote[]             // Canal admin↔vendedor. No visible al cliente.
   // Picking / verificación de armado
   pickingIniciado?: boolean
   pickingCompletado?: boolean
@@ -255,6 +269,8 @@ export interface Order {
   cancelacionSolicitadaEn?: string
   // Direccion de envío seleccionada (referencia a SavedAddress)
   addressId?: string                         // Si se usó una dirección guardada
+  // Trazabilidad
+  duplicadoDeOrderId?: string                // Si este pedido se creó vía "Repetir pedido"
 }
 
 export interface OrderHistoryEntry {

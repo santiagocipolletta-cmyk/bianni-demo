@@ -8,6 +8,7 @@ import type {
   OrderItem,
   OrderStatus,
   OrderHistoryEntry,
+  InternalNote,
   Client,
   SavedAddress,
   Seller,
@@ -173,6 +174,15 @@ interface DataState {
   approveRepresentativeRequest: (requestId: string, sellerId: string, resueltaPor: string) => void
   rejectRepresentativeRequest: (requestId: string, motivo: string, resueltaPor: string) => void
 
+  // Notas internas en pedidos (canal admin↔vendedor)
+  addOrderInternalNote: (orderId: string, nota: Omit<InternalNote, 'id' | 'createdAt'>) => void
+
+  // Duplicar pedido (botón "Repetir pedido" del vendedor)
+  // Crea Order nueva en pendiente_revision con mismos items y mismo cliente.
+  // NO copia: notas internas, descuentos, observaciones, remito, historial.
+  // Retorna el id del nuevo pedido o null si no se encuentra el original.
+  duplicateOrder: (orderId: string, createdBy: string) => string | null
+
   // Helpers / derived
   getOrderWithDetails: (orderId: string) => OrderWithDetails | null
   getProductPrice: (productId: string, priceListId: string) => number
@@ -189,6 +199,7 @@ interface DataState {
   getReservasPreventa: () => Order[]
   getActiveProducts: () => Product[]                                 // solo productos en estado 'activo'
   getCatalogProducts: () => Product[]                                // alias semántico, no incluye preventa
+  getOrdersForSeller: (sellerId: string) => Order[]                  // todos los pedidos de los clientes asignados a un vendedor
 }
 
 let idCounter = 1000
@@ -1291,10 +1302,96 @@ export const useDataStore = create<DataState>()(
         // Activos no preventa (preventa va al /preventas separado)
         return get().products.filter((p) => p.estado === 'activo' && !p.preventa)
       },
+
+      getOrdersForSeller: (sellerId) => {
+        const state = get()
+        const myClientIds = new Set(
+          state.clients.filter((c) => c.sellerId === sellerId).map((c) => c.id)
+        )
+        return state.orders.filter((o) => myClientIds.has(o.clienteId))
+      },
+
+      addOrderInternalNote: (orderId, nota) => {
+        set((state) => ({
+          orders: state.orders.map((o) =>
+            o.id === orderId
+              ? {
+                  ...o,
+                  notasInternas: [
+                    ...(o.notasInternas ?? []),
+                    {
+                      id: generateId('note'),
+                      texto: nota.texto,
+                      autorNombre: nota.autorNombre,
+                      autorRol: nota.autorRol,
+                      createdAt: new Date().toISOString(),
+                    },
+                  ],
+                }
+              : o
+          ),
+        }))
+      },
+
+      duplicateOrder: (orderId, createdBy) => {
+        const state = get()
+        const original = state.orders.find((o) => o.id === orderId)
+        if (!original) return null
+
+        // Numerar el nuevo código S-XXXX siguiendo el patrón del store
+        const solicitudCount = state.orders.filter((o) => o.codigo.startsWith('S-')).length + 1
+        const newCodigo = `S-${String(solicitudCount).padStart(4, '0')}`
+        const newId = generateId('o')
+
+        const newOrder: Order = {
+          id: newId,
+          codigo: newCodigo,
+          clienteId: original.clienteId,
+          sellerId: original.sellerId,
+          estado: 'pendiente_revision',
+          // Items: mismos productos y cantidades, sin marca picked, sin reemplazos arrastrados
+          items: original.items.map((it) => ({
+            productId: it.productId,
+            cantidad: it.cantidad,
+            precioUnit: it.precioUnit,
+            descuentoAplicado: it.descuentoAplicado,
+            picked: false,
+          })),
+          subtotal: original.subtotal,
+          total: original.subtotal,    // sin cupón en la duplicación
+          fecha: new Date().toISOString(),
+          plazoPagoDias: original.plazoPagoDias,
+          tipoEntrega: original.tipoEntrega,
+          direccionEnvio: original.direccionEnvio,
+          addressId: original.addressId,
+          duplicadoDeOrderId: original.id,
+          // NO copiados: cuponCodigo, cuponDescuentoPct, observaciones, motivoRechazo,
+          //   notasAdmin, notasInternas, picking, remito, bonificacionReclamoId, cancelación
+        }
+
+        // Reutilizo addOrder para que también registre la entrada inicial en orderHistory
+        set((s) => ({
+          orders: [...s.orders, newOrder],
+          orderHistory: [
+            ...s.orderHistory,
+            {
+              id: generateId('h'),
+              orderId: newId,
+              estadoAnterior: null,
+              estadoNuevo: 'pendiente_revision',
+              cambiadoPor: createdBy,
+              motivo: `Duplicado de ${original.codigo}`,
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        }))
+
+        return newId
+      },
     }),
     {
       name: 'bianni-data',
-      version: 4,
+      version: 5,
       merge: (persisted, current) => ({
         ...(persisted as Partial<DataState>),
         ...current,
