@@ -9,6 +9,7 @@ import { Lock, Award, ShieldCheck, Star, Truck, ShoppingBag, Headphones } from '
 import { toast } from 'sonner'
 import { Logo } from '@/components/brand/Logo'
 import { LoginModal } from '@/components/auth/LoginModal'
+import { HeroSlideshow } from '@/components/public/HeroSlideshow'
 import { useAuthStore } from '@/stores/auth-store'
 import { useDataStore } from '@/stores/data-store'
 import { cn } from '@/lib/utils'
@@ -83,60 +84,6 @@ function PublicNav({ onLoginClick }: { onLoginClick: () => void }) {
         </button>
       </div>
     </nav>
-  )
-}
-
-// ─── Hero Section ──────────────────────────────────────────────────────────────
-
-function HeroSection({ onLoginClick }: { onLoginClick: () => void }) {
-  return (
-    <section className="relative min-h-screen flex items-center overflow-hidden">
-      <Image
-        src="/brand/models/model-hero.jpg"
-        alt="BIANNI Eyewear editorial"
-        fill
-        priority
-        className="object-cover object-top"
-        sizes="100vw"
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/20" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
-
-      <div className="relative z-10 px-8 md:px-16 lg:px-24 max-w-4xl">
-        <motion.p
-          className="text-[10px] tracking-[0.35em] uppercase text-white/60 mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        >
-          BIANNI Eyewear
-        </motion.p>
-        <motion.h1
-          className="font-display text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] font-semibold text-white leading-[0.9] uppercase tracking-tight mb-10"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        >
-          Todo comienza<br />
-          con una<br />
-          <span className="italic font-light">mirada.</span>
-        </motion.h1>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <button onClick={onLoginClick} className="btn-bianni-outline text-[11px] py-4 px-10">
-            Ver catálogo
-          </button>
-        </motion.div>
-      </div>
-
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
-        <span className="text-white text-[9px] tracking-[0.3em] uppercase">Scroll</span>
-        <div className="w-px h-8 bg-white animate-scroll-bounce" />
-      </div>
-    </section>
   )
 }
 
@@ -849,8 +796,8 @@ export default function HomePage() {
     <main className="bg-black min-h-screen">
       <PublicNav onLoginClick={() => setLoginOpen(true)} />
 
-      {/* 1 — Hero */}
-      <HeroSection onLoginClick={() => setLoginOpen(true)} />
+      {/* 1 — Hero slideshow (BATCH 1 del rediseño público) */}
+      <HeroSlideshow onLoginClick={() => setLoginOpen(true)} />
 
       {/* 2 — Statement: "Conoce nuestra línea exclusiva" */}
       <StatementSection />
