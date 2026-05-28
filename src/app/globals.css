@@ -205,3 +205,19 @@
 .animate-scroll-bounce {
   animation: scrollBounce 2s ease-in-out infinite;
 }
+
+/* Marquee — scroll horizontal continuo para el carrusel de novedades.
+   Se desplaza -50% porque el set de items está duplicado (loop sin salto). */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+/* Respeta la preferencia de reducir movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee { animation: none; }
+}

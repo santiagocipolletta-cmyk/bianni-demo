@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { Logo } from '@/components/brand/Logo'
 import { LoginModal } from '@/components/auth/LoginModal'
 import { HeroSlideshow } from '@/components/public/HeroSlideshow'
+import { NoveltyMarquee } from '@/components/public/NoveltyMarquee'
 import { useAuthStore } from '@/stores/auth-store'
 import { useDataStore } from '@/stores/data-store'
 import { cn } from '@/lib/utils'
@@ -804,7 +805,10 @@ export default function HomePage() {
       {/* 2 — Statement: "Conoce nuestra línea exclusiva" */}
       <StatementSection />
 
-      {/* 3 — Editorial poster */}
+      {/* 3 — Carrusel de novedades (BATCH 2) — scroll infinito de productos novedad */}
+      <NoveltyMarquee />
+
+      {/* 4 — Editorial poster */}
       <EditorialSection />
 
       {/* 4 — Categories: CLIP-ON / RECETA / SOL */}
