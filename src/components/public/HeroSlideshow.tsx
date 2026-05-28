@@ -125,39 +125,42 @@ export function HeroSlideshow() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
       </div>
 
-      {/* Texto abajo izquierda */}
-      <div className="absolute left-6 md:left-10 lg:left-14 bottom-20 md:bottom-24 z-10 max-w-md">
+      {/* Texto abajo izquierda — grande, sans, con reveal línea por línea (estilo original) */}
+      <div className="absolute left-6 md:left-10 lg:left-14 bottom-16 md:bottom-20 z-10 max-w-[80%]">
         <AnimatePresence mode="wait">
           <motion.div
             key={`${slide.text[0]}-${current}`}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col"
           >
-            <span className="font-display text-white text-2xl md:text-3xl lg:text-4xl font-light tracking-[0.15em] leading-[1.05]">
-              {slide.text[0]}
-            </span>
-            <span className="font-display text-white text-2xl md:text-3xl lg:text-4xl font-light tracking-[0.15em] leading-[1.05]">
-              {slide.text[1]}
-            </span>
+            {slide.text.map((line, i) => (
+              <div key={i} className="overflow-hidden">
+                <motion.span
+                  className="block font-sans text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light uppercase tracking-[0.08em] leading-[1.05] [text-shadow:0_2px_24px_rgba(0,0,0,0.45)]"
+                  initial={{ y: '110%' }}
+                  animate={{ y: '0%' }}
+                  exit={{ y: '-110%' }}
+                  transition={{ duration: 0.7, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  {line}
+                </motion.span>
+              </div>
+            ))}
           </motion.div>
         </AnimatePresence>
-
-        {/* CTA único: "Quiero ser representante" con efecto shiny.
-            El acceso a cuenta vive solo en la barra superior. */}
-        <motion.div
-          className="mt-6"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <ShinyButton onClick={() => router.push('/sumate')}>
-            Quiero ser representante
-          </ShinyButton>
-        </motion.div>
       </div>
+
+      {/* CTA "Quiero ser representante" — abajo derecha, efecto shiny.
+          El acceso a cuenta vive solo en la barra superior. */}
+      <motion.div
+        className="absolute right-6 md:right-10 lg:right-14 bottom-16 md:bottom-20 z-10"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+      >
+        <ShinyButton onClick={() => router.push('/sumate')}>
+          Quiero ser representante
+        </ShinyButton>
+      </motion.div>
 
       {/* Flechas ← → a los costados, con cuadradito glass como el original */}
       <button
