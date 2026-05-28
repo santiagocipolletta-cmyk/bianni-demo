@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronLeft, ChevronRight, ArrowRight, LogIn } from 'lucide-react'
+import { ArrowRight, LogIn } from 'lucide-react'
 
 /**
  * HeroSlideshow — hero de la home pública BIANNI.
@@ -168,27 +168,25 @@ export function HeroSlideshow({ onLoginClick }: HeroSlideshowProps) {
         </motion.div>
       </div>
 
+      {/* Flechas ← → a los costados, estilo del componente original — solo el carácter, sin caja */}
+      <button
+        onClick={prevSlide}
+        aria-label="Slide anterior"
+        className="absolute left-4 md:left-8 lg:left-12 top-1/2 -translate-y-1/2 z-20 text-white/70 hover:text-white text-3xl md:text-4xl font-light leading-none transition-colors select-none"
+      >
+        ←
+      </button>
+      <button
+        onClick={nextSlide}
+        aria-label="Slide siguiente"
+        className="absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-20 text-white/70 hover:text-white text-3xl md:text-4xl font-light leading-none transition-colors select-none"
+      >
+        →
+      </button>
+
       {/* Contador 0X / 0Y — abajo derecha, estilo del original */}
       <div className="absolute right-6 md:right-10 lg:right-14 bottom-8 z-10 text-white/90 text-xs tracking-[0.25em] font-light">
         {pad(current + 1)} <span className="text-white/40">/</span> {pad(SLIDES.length)}
-      </div>
-
-      {/* Navegación ← → estilo minimalista, abajo derecha cerca del contador */}
-      <div className="absolute right-6 md:right-10 lg:right-14 bottom-20 z-10 flex items-center gap-3">
-        <button
-          onClick={prevSlide}
-          aria-label="Slide anterior"
-          className="w-10 h-10 flex items-center justify-center text-white/70 hover:text-white border border-white/30 hover:border-white transition-colors"
-        >
-          <ChevronLeft size={16} strokeWidth={1.5} />
-        </button>
-        <button
-          onClick={nextSlide}
-          aria-label="Slide siguiente"
-          className="w-10 h-10 flex items-center justify-center text-white/70 hover:text-white border border-white/30 hover:border-white transition-colors"
-        >
-          <ChevronRight size={16} strokeWidth={1.5} />
-        </button>
       </div>
     </section>
   )
