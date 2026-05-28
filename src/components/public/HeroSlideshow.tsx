@@ -135,7 +135,7 @@ export function HeroSlideshow() {
             {slide.text.map((line, i) => (
               <div key={i} className="overflow-hidden">
                 <motion.span
-                  className="block font-sans text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light uppercase tracking-[0.08em] leading-[1.05] [text-shadow:0_2px_24px_rgba(0,0,0,0.45)]"
+                  className="block font-display text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold uppercase tracking-[0.04em] leading-[1.02] [text-shadow:0_2px_28px_rgba(0,0,0,0.55)]"
                   initial={{ y: '110%' }}
                   animate={{ y: '0%' }}
                   exit={{ y: '-110%' }}
