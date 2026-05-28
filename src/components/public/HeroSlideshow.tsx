@@ -11,20 +11,19 @@ import { ArrowRight, LogIn } from 'lucide-react'
  *
  * Diseño basado en el componente "Slideshow" de la biblioteca (BETWEEN SHADOW
  * AND LIGHT): imagen full-bleed, texto chico abajo a la izquierda, contador
- * 0X / 0Y abajo derecha, navegación minimalista.
+ * 0X / 0Y abajo-centro, flechas ← → a los costados con cuadradito glass.
  *
  * Adaptaciones BIANNI:
  *  - Autoplay 3 seg (el original es 100% manual)
  *  - 2 CTAs ("Quiero ser representante" + "Ingresá a tu cuenta") según plan
+ *  - La imagen arranca debajo de la barra superior (offset = alto del nav)
  *
  * Imágenes y textos definitivos los elige Giuliana — acá uso placeholders.
  */
 
 interface Slide {
-  /** Path en /public — fondo del slide */
   image: string
   alt: string
-  /** Dos líneas de texto cortas estilo "BETWEEN SHADOW / AND LIGHT" */
   text: [string, string]
 }
 
@@ -52,6 +51,8 @@ const SLIDES: Slide[] = [
 ]
 
 const AUTOPLAY_INTERVAL = 3000
+/** Alto aproximado del PublicNav (py-6 + logo) — la imagen arranca debajo */
+const NAV_OFFSET = '76px'
 
 interface HeroSlideshowProps {
   onLoginClick: () => void
@@ -73,14 +74,12 @@ export function HeroSlideshow({ onLoginClick }: HeroSlideshowProps) {
     setCurrent((prev) => (prev - 1 + SLIDES.length) % SLIDES.length)
   }, [])
 
-  // Autoplay con pausa en hover
   useEffect(() => {
     if (paused) return
     const t = setInterval(nextSlide, AUTOPLAY_INTERVAL)
     return () => clearInterval(t)
   }, [paused, nextSlide])
 
-  // Navegación por teclado
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'ArrowRight') nextSlide()
@@ -100,31 +99,36 @@ export function HeroSlideshow({ onLoginClick }: HeroSlideshowProps) {
       aria-roledescription="carousel"
       aria-label="Presentación destacada de BIANNI Eyewear"
     >
-      {/* Slides: crossfade full-bleed */}
-      <AnimatePresence>
-        <motion.div
-          key={slide.image}
-          className="absolute inset-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <Image
-            src={slide.image}
-            alt={slide.alt}
-            fill
-            priority={current === 0}
-            className="object-cover object-center"
-            sizes="100vw"
-          />
-        </motion.div>
-      </AnimatePresence>
+      {/* Imagen: arranca debajo de la barra superior (offset de nav) */}
+      <div
+        className="absolute inset-x-0 bottom-0"
+        style={{ top: NAV_OFFSET }}
+      >
+        <AnimatePresence>
+          <motion.div
+            key={slide.image}
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <Image
+              src={slide.image}
+              alt={slide.alt}
+              fill
+              priority={current === 0}
+              className="object-cover object-center"
+              sizes="100vw"
+            />
+          </motion.div>
+        </AnimatePresence>
 
-      {/* Overlay sutil solo en la parte inferior para legibilidad — no tapa la foto */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/30 to-transparent z-[1]" />
+        {/* Overlay sutil solo en la parte inferior para legibilidad del texto */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+      </div>
 
-      {/* Texto abajo izquierda — estilo del componente original */}
+      {/* Texto abajo izquierda */}
       <div className="absolute left-6 md:left-10 lg:left-14 bottom-20 md:bottom-24 z-10 max-w-md">
         <AnimatePresence mode="wait">
           <motion.div
@@ -144,48 +148,50 @@ export function HeroSlideshow({ onLoginClick }: HeroSlideshowProps) {
           </motion.div>
         </AnimatePresence>
 
-        {/* CTAs debajo del texto, compactos */}
+        {/* CTAs */}
         <motion.div
-          className="flex flex-col sm:flex-row gap-2 mt-5"
+          className="flex flex-col sm:flex-row gap-2.5 mt-6"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
+          {/* Primario: totalmente transparente con recuadro blanco */}
           <Link
             href="/sumate"
-            className="inline-flex items-center justify-center gap-1.5 bg-white text-black px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase font-medium hover:bg-zinc-100 transition-colors"
+            className="group inline-flex items-center justify-center gap-2 border border-white text-white px-6 py-3 text-[10px] tracking-[0.22em] uppercase hover:bg-white hover:text-black transition-colors"
           >
             Quiero ser representante
-            <ArrowRight size={11} strokeWidth={2} />
+            <ArrowRight size={12} strokeWidth={2} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
+          {/* Secundario: glass oscuro semi-transparente */}
           <button
             onClick={onLoginClick}
-            className="inline-flex items-center justify-center gap-1.5 border border-white/70 text-white px-5 py-2.5 text-[10px] tracking-[0.2em] uppercase hover:bg-white hover:text-black hover:border-white transition-colors"
+            className="inline-flex items-center justify-center gap-2 bg-black/30 backdrop-blur-md border border-white/25 text-white px-6 py-3 text-[10px] tracking-[0.22em] uppercase hover:bg-black/50 hover:border-white/40 transition-colors"
           >
-            <LogIn size={11} strokeWidth={2} />
+            <LogIn size={12} strokeWidth={2} />
             Ingresá a tu cuenta
           </button>
         </motion.div>
       </div>
 
-      {/* Flechas ← → a los costados, estilo del componente original — solo el carácter, sin caja */}
+      {/* Flechas ← → a los costados, con cuadradito glass como el original */}
       <button
         onClick={prevSlide}
         aria-label="Slide anterior"
-        className="absolute left-4 md:left-8 lg:left-12 top-1/2 -translate-y-1/2 z-20 text-white/70 hover:text-white text-3xl md:text-4xl font-light leading-none transition-colors select-none"
+        className="absolute left-4 md:left-8 lg:left-10 top-1/2 -translate-y-1/2 z-20 w-11 h-11 flex items-center justify-center bg-black/30 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/50 text-2xl font-light leading-none transition-colors select-none"
       >
         ←
       </button>
       <button
         onClick={nextSlide}
         aria-label="Slide siguiente"
-        className="absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-20 text-white/70 hover:text-white text-3xl md:text-4xl font-light leading-none transition-colors select-none"
+        className="absolute right-4 md:right-8 lg:right-10 top-1/2 -translate-y-1/2 z-20 w-11 h-11 flex items-center justify-center bg-black/30 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/50 text-2xl font-light leading-none transition-colors select-none"
       >
         →
       </button>
 
-      {/* Contador 0X / 0Y — abajo derecha, estilo del original */}
-      <div className="absolute right-6 md:right-10 lg:right-14 bottom-8 z-10 text-white/90 text-xs tracking-[0.25em] font-light">
+      {/* Contador 0X / 0Y — abajo centro, como el original */}
+      <div className="absolute left-1/2 -translate-x-1/2 bottom-8 z-10 text-white/90 text-xs tracking-[0.3em] font-light">
         {pad(current + 1)} <span className="text-white/40">/</span> {pad(SLIDES.length)}
       </div>
     </section>

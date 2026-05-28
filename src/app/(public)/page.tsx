@@ -39,10 +39,10 @@ function PublicNav({ onLoginClick }: { onLoginClick: () => void }) {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 md:px-12 py-6 transition-all duration-500 backdrop-blur-md border-b ${
+      className={`fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 md:px-12 py-6 transition-all duration-500 border-b ${
         scrolled
-          ? 'bg-black/90 border-white/10'
-          : 'bg-black/40 border-white/[0.04]'
+          ? 'bg-black/40 backdrop-blur-md border-white/[0.06]'
+          : 'bg-black border-white/10'
       }`}
     >
       <Logo variant="wordmark" className="h-7" />
