@@ -97,11 +97,11 @@ export const DEMO_USERS: DemoUser[] = [
 // ─── CATEGORIES ───────────────────────────────────────────────────────────────
 
 export const CATEGORIES: Category[] = [
-  { id: 'cat1', name: 'CLIP-ON', order: 1 },
-  { id: 'cat2', name: 'RECETA',  order: 2 },
-  { id: 'cat3', name: 'SOL',     order: 3 },
-  { id: 'cat4', name: 'TR90',    order: 4 },
-  { id: 'cat5', name: 'METAL',   order: 5 },
+  { id: 'cat1', name: 'CLIP-ON', order: 1, imagenUrl: '/brand/products/clipon.jpg' },
+  { id: 'cat2', name: 'RECETA',  order: 2, imagenUrl: '/brand/products/receta.jpg' },
+  { id: 'cat3', name: 'SOL',     order: 3, imagenUrl: '/brand/products/sol.jpg' },
+  { id: 'cat4', name: 'TR90',    order: 4, imagenUrl: '/brand/models/model-editorial.jpg' },
+  { id: 'cat5', name: 'METAL',   order: 5, imagenUrl: '/brand/models/model-hero.jpg' },
 ]
 
 // ─── PRODUCTS ─────────────────────────────────────────────────────────────────

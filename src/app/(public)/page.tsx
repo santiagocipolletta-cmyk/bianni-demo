@@ -11,6 +11,7 @@ import { Logo } from '@/components/brand/Logo'
 import { LoginModal } from '@/components/auth/LoginModal'
 import { HeroSlideshow } from '@/components/public/HeroSlideshow'
 import { NoveltyMarquee } from '@/components/public/NoveltyMarquee'
+import { CategoriesHoverSlider } from '@/components/public/CategoriesHoverSlider'
 import { useAuthStore } from '@/stores/auth-store'
 import { useDataStore } from '@/stores/data-store'
 import { cn } from '@/lib/utils'
@@ -142,85 +143,6 @@ function EditorialSection() {
           />
         </motion.div>
       </motion.div>
-    </section>
-  )
-}
-
-// ─── Categories Section ────────────────────────────────────────────────────────
-
-const CATEGORIES = [
-  {
-    name: 'CLIP-ON',
-    description: 'Versatilidad sin compromiso',
-    bg: 'bg-zinc-800',
-    textColor: 'text-white',
-    borderColor: 'border-zinc-600',
-    image: '/brand/models/model-editorial.jpg',
-  },
-  {
-    name: 'RECETA',
-    description: 'Precisión óptica, diseño puro',
-    bg: 'bg-zinc-700',
-    textColor: 'text-white',
-    borderColor: 'border-zinc-500',
-    image: '/brand/models/model-receta.jpg',
-  },
-  {
-    name: 'SOL',
-    description: 'Editoriales de carácter',
-    bg: 'bg-zinc-900',
-    textColor: 'text-white',
-    borderColor: 'border-zinc-700',
-    image: '/brand/models/model-sol.jpg',
-  },
-]
-
-function CategoriesSection({ onCategoryClick }: { onCategoryClick: (name: string) => void }) {
-  return (
-    <section className="bg-black py-px">
-      <div className="grid grid-cols-1 md:grid-cols-3">
-        {CATEGORIES.map((cat, i) => (
-          <motion.button
-            key={cat.name}
-            onClick={() => onCategoryClick(cat.name)}
-            className={`group relative overflow-hidden h-64 md:h-72 text-left ${cat.bg} transition-all duration-500 hover:brightness-110`}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: 0.7, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <Image
-              src={cat.image}
-              alt={cat.name}
-              fill
-              className="object-cover object-center opacity-50 group-hover:opacity-65 group-hover:scale-105 transition-all duration-700"
-              sizes="(max-width: 768px) 100vw, 33vw"
-            />
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors duration-500" />
-            <div className="absolute inset-0 p-8 flex flex-col justify-end">
-              <div>
-                <p className={`text-[9px] tracking-[0.3em] uppercase mb-2 ${cat.textColor} opacity-60`}>
-                  Colección
-                </p>
-                <h3 className={`font-display text-4xl font-semibold tracking-tight uppercase ${cat.textColor}`}>
-                  {cat.name}
-                </h3>
-                <p className={`text-xs tracking-wide mt-1 ${cat.textColor} opacity-60`}>
-                  {cat.description}
-                </p>
-              </div>
-              <div
-                className={`mt-4 flex items-center gap-2 text-[10px] tracking-[0.2em] uppercase font-medium ${cat.textColor} opacity-0 group-hover:opacity-70 translate-y-2 group-hover:translate-y-0 transition-all duration-300`}
-              >
-                Ver colección
-                <svg width="16" height="8" viewBox="0 0 16 8" fill="none">
-                  <path d="M0 4h14M11 1l3 3-3 3" stroke="currentColor" strokeWidth="1" />
-                </svg>
-              </div>
-            </div>
-          </motion.button>
-        ))}
-      </div>
     </section>
   )
 }
@@ -811,8 +733,8 @@ export default function HomePage() {
       {/* 4 — Editorial poster */}
       <EditorialSection />
 
-      {/* 4 — Categories: CLIP-ON / RECETA / SOL */}
-      <CategoriesSection onCategoryClick={handleCategoryClick} />
+      {/* 5 — Colecciones: HoverSlider de categorías dinámicas (BATCH 3) */}
+      <CategoriesHoverSlider onSelectCategory={handleCategoryClick} />
 
       {/* 5 — Public catalog */}
       <PublicCatalogSection

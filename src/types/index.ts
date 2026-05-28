@@ -18,6 +18,7 @@ export interface Category {
   id: string
   name: string // CLIP-ON | RECETA | SOL | TR90 | METAL
   order: number
+  imagenUrl?: string // Imagen representativa para la sección "Colecciones" de la web pública
 }
 
 // ─── PRODUCTS ─────────────────────────────────────────────────────────────────
