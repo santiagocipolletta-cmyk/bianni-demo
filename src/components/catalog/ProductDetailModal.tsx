@@ -17,6 +17,10 @@ interface ProductDetailModalProps {
   priceListId: string
   /** Si se pasa, las mini-cards de sustitutos hacen swap del producto en el modal. */
   onProductSwap?: (product: Product) => void
+  /** Modo público (lookbook): oculta precios, stock, sustitutos y carrito. */
+  hidePrice?: boolean
+  /** CTA en modo público: invita a loguearse para ver precios/pedir. */
+  onRequireLogin?: () => void
 }
 
 export function ProductDetailModal({
@@ -25,6 +29,8 @@ export function ProductDetailModal({
   onClose,
   priceListId,
   onProductSwap,
+  hidePrice = false,
+  onRequireLogin,
 }: ProductDetailModalProps) {
   const {
     categories,
@@ -101,7 +107,7 @@ export function ProductDetailModal({
                       alt={product.name}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      className={cn('object-cover', isOutOfStock && 'grayscale opacity-80')}
+                      className={cn('object-cover', isOutOfStock && !hidePrice && 'grayscale opacity-80')}
                       priority
                     />
                   </motion.div>
@@ -124,7 +130,7 @@ export function ProductDetailModal({
                       Novedad
                     </span>
                   )}
-                  {isOutOfStock && (
+                  {isOutOfStock && !hidePrice && (
                     <span className="bg-red-900 text-red-100 text-[9px] tracking-[0.25em] uppercase px-2.5 py-1">
                       Sin stock
                     </span>
@@ -201,36 +207,40 @@ export function ProductDetailModal({
                   </div>
                 )}
 
-                {/* Precios */}
-                <div className="space-y-2 mb-6">
-                  <div className="flex items-baseline justify-between gap-3 border-b border-[#1A1A1A] pb-3">
-                    <span className="text-[10px] tracking-[0.2em] uppercase text-[#666]">Precio mayorista</span>
-                    <span className="font-display text-2xl text-white font-light">
-                      {price > 0 ? formatARS(price) : '—'}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-[10px] tracking-[0.2em] uppercase text-[#666]">PVR (sugerido)</span>
-                    <span className="text-base text-[#A0A0A0]">{formatARS(product.pvr)}</span>
-                  </div>
-                </div>
-
-                {/* Stock info */}
-                <div className="mb-6 text-xs">
-                  {isOutOfStock ? (
-                    <div className="flex items-start gap-2 text-red-400">
-                      <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" />
-                      <span>Sin stock disponible</span>
+                {/* Precios — ocultos en modo público (lookbook) */}
+                {!hidePrice && (
+                  <div className="space-y-2 mb-6">
+                    <div className="flex items-baseline justify-between gap-3 border-b border-[#1A1A1A] pb-3">
+                      <span className="text-[10px] tracking-[0.2em] uppercase text-[#666]">Precio mayorista</span>
+                      <span className="font-display text-2xl text-white font-light">
+                        {price > 0 ? formatARS(price) : '—'}
+                      </span>
                     </div>
-                  ) : stockState === 'pocas_unidades' ? (
-                    <p className="text-yellow-400">Quedan solo {available} unidades disponibles</p>
-                  ) : (
-                    <p className="text-emerald-400">{available} unidades disponibles</p>
-                  )}
-                </div>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-[10px] tracking-[0.2em] uppercase text-[#666]">PVR (sugerido)</span>
+                      <span className="text-base text-[#A0A0A0]">{formatARS(product.pvr)}</span>
+                    </div>
+                  </div>
+                )}
 
-                {/* Sustitutos: prominente si sin stock, secundario si hay stock */}
-                {substitutes.length > 0 && (
+                {/* Stock info — oculto en modo público */}
+                {!hidePrice && (
+                  <div className="mb-6 text-xs">
+                    {isOutOfStock ? (
+                      <div className="flex items-start gap-2 text-red-400">
+                        <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" />
+                        <span>Sin stock disponible</span>
+                      </div>
+                    ) : stockState === 'pocas_unidades' ? (
+                      <p className="text-yellow-400">Quedan solo {available} unidades disponibles</p>
+                    ) : (
+                      <p className="text-emerald-400">{available} unidades disponibles</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Sustitutos — solo en modo privado (requieren stock/precio) */}
+                {!hidePrice && substitutes.length > 0 && (
                   <SubstitutesSection
                     substitutes={substitutes}
                     priceListId={priceListId}
@@ -241,7 +251,15 @@ export function ProductDetailModal({
 
                 {/* CTA */}
                 <div className="mt-auto">
-                  {!isOutOfStock ? (
+                  {hidePrice ? (
+                    <button
+                      onClick={() => onRequireLogin?.()}
+                      className="w-full bg-white text-black text-xs tracking-[0.2em] uppercase py-4 font-medium hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <ShoppingCart size={14} />
+                      Ingresá para ver precios y pedir
+                    </button>
+                  ) : !isOutOfStock ? (
                     <>
                       {inCart ? (
                         <div className="flex items-center justify-between border border-emerald-700 bg-emerald-950 px-4 py-3.5">

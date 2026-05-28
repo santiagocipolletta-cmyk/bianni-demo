@@ -12,10 +12,11 @@ import { LoginModal } from '@/components/auth/LoginModal'
 import { HeroSlideshow } from '@/components/public/HeroSlideshow'
 import { NoveltyMarquee } from '@/components/public/NoveltyMarquee'
 import { CategoriesHoverSlider } from '@/components/public/CategoriesHoverSlider'
+import { ProductDetailModal } from '@/components/catalog/ProductDetailModal'
 import { useAuthStore } from '@/stores/auth-store'
 import { useDataStore } from '@/stores/data-store'
 import { cn } from '@/lib/utils'
-import type { UserRole } from '@/types'
+import type { UserRole, Product } from '@/types'
 
 const ROLE_REDIRECTS: Record<UserRole, string> = {
   distribuidor: '/catalogo',
@@ -160,9 +161,10 @@ interface PublicCatalogProps {
 
 function PublicCatalogSection({ onLoginClick, selectedCat, onCategoryChange, sectionRef }: PublicCatalogProps) {
   const { products, categories } = useDataStore()
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null)
 
-  // LOOKBOOK público: solo destacados y novedad — NO el catálogo completo
-  const activeProducts = products.filter((p) => p.estado === 'activo' && (p.destacado || p.novedad))
+  // LOOKBOOK público: TODOS los productos activos (sin preventa, que es canal aparte)
+  const activeProducts = products.filter((p) => p.estado === 'activo' && !p.preventa)
   const visible =
     selectedCat === ALL_CAT
       ? activeProducts
@@ -183,9 +185,14 @@ function PublicCatalogSection({ onLoginClick, selectedCat, onCategoryChange, sec
           Colección 2026
         </p>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-          <h2 className="font-display text-4xl md:text-5xl text-white font-light">
-            Nuestros productos
-          </h2>
+          <div>
+            <h2 className="font-display text-4xl md:text-5xl text-white font-light">
+              Nuestro catálogo
+            </h2>
+            <p className="text-zinc-600 text-xs tracking-[0.1em] mt-2">
+              {visible.length} {visible.length === 1 ? 'modelo' : 'modelos'} · explorá sin precios, ingresá para pedir
+            </p>
+          </div>
           <button
             onClick={onLoginClick}
             className="flex items-center gap-2 border border-white/20 px-4 py-2 text-[10px] tracking-[0.2em] uppercase text-zinc-400 hover:border-white hover:text-white transition-colors self-start sm:self-auto"
@@ -218,12 +225,14 @@ function PublicCatalogSection({ onLoginClick, selectedCat, onCategoryChange, sec
           {visible.map((product, index) => {
             const category = categories.find((c) => c.id === product.categoryId)
             return (
-              <motion.div
+              <motion.button
                 key={product.id}
-                className="bg-black flex flex-col group"
+                type="button"
+                onClick={() => setDetailProduct(product)}
+                className="bg-black flex flex-col group text-left cursor-pointer"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.03, ease: 'easeOut' }}
+                transition={{ duration: 0.4, delay: Math.min(index, 8) * 0.03, ease: 'easeOut' }}
               >
                 <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden">
                   {product.badge && (
@@ -238,29 +247,31 @@ function PublicCatalogSection({ onLoginClick, selectedCat, onCategoryChange, sec
                     sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
+                  {/* Hint "ver detalle" al hover */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <span className="text-white text-[9px] tracking-[0.25em] uppercase border border-white/60 px-3 py-1.5 bg-black/40 backdrop-blur-sm">
+                      Ver detalle
+                    </span>
+                  </div>
                 </div>
                 <div className="flex flex-col p-4 border-t border-[#1A1A1A] flex-1">
                   <p className="text-[9px] tracking-[0.2em] uppercase text-zinc-600 mb-1">
                     {category?.name ?? '—'}
                   </p>
-                  <h3 className="text-sm text-white font-light mb-1 leading-snug">
+                  <h3 className="text-sm text-white font-light leading-snug">
                     {product.name}
                   </h3>
-                  <p className="text-[10px] text-zinc-600 leading-relaxed line-clamp-2 flex-1 mb-4">
-                    {product.description}
-                  </p>
-                  <button
-                    onClick={onLoginClick}
-                    className="flex items-center gap-1.5 text-[9px] tracking-[0.15em] uppercase text-zinc-600 hover:text-white transition-colors mt-auto"
-                  >
-                    <Lock size={9} strokeWidth={1.5} />
-                    Precio mayorista — iniciá sesión
-                  </button>
                 </div>
-              </motion.div>
+              </motion.button>
             )
           })}
         </div>
+
+        {visible.length === 0 && (
+          <div className="flex items-center justify-center py-16">
+            <p className="text-zinc-600 text-xs tracking-[0.2em] uppercase">Sin modelos en esta categoría</p>
+          </div>
+        )}
       </div>
 
       <div className="px-8 md:px-16 mt-12 flex justify-center">
@@ -268,6 +279,16 @@ function PublicCatalogSection({ onLoginClick, selectedCat, onCategoryChange, sec
           Acceder para ver precios y hacer pedidos
         </button>
       </div>
+
+      {/* Modal detalle en modo público — sin precios */}
+      <ProductDetailModal
+        product={detailProduct}
+        open={!!detailProduct}
+        onClose={() => setDetailProduct(null)}
+        priceListId="pl1"
+        hidePrice
+        onRequireLogin={() => { setDetailProduct(null); onLoginClick() }}
+      />
     </section>
   )
 }
