@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion, useScroll, useTransform } from 'motion/react'
-import { Lock, Award, ShieldCheck, Star, Truck, ShoppingBag, Headphones } from 'lucide-react'
+import { motion } from 'motion/react'
+import { Lock, Award, ShieldCheck, Star, Truck, ShoppingBag, Headphones, Gift, Sparkles, Rocket, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import { Logo } from '@/components/brand/Logo'
 import { LoginModal } from '@/components/auth/LoginModal'
@@ -108,42 +108,6 @@ function StatementSection() {
         <span className="text-white">potencia tu óptica.</span>{' '}
         Certificación europea, sin pedido mínimo, envíos a todo el país.
       </motion.p>
-    </section>
-  )
-}
-
-// ─── Editorial Image Section ───────────────────────────────────────────────────
-
-function EditorialSection() {
-  const sectionRef = useRef<HTMLElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start end', 'end start'],
-  })
-  // Subtle parallax: image moves slightly slower than scroll
-  const y = useTransform(scrollYProgress, [0, 1], ['-5%', '5%'])
-
-  return (
-    <section ref={sectionRef} className="relative bg-black overflow-hidden">
-      <motion.div
-        className="relative w-full"
-        initial={{ opacity: 0, scale: 1.04 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true, margin: '-60px' }}
-        transition={{ duration: 1.1, ease: EASE_OUT }}
-      >
-        <motion.div style={{ y }} className="relative w-full">
-          <Image
-            src="/brand/editorial-main.jpg"
-            alt="BIANNI Eyewear — colección editorial"
-            width={2400}
-            height={1032}
-            className="w-full h-auto object-cover"
-            sizes="100vw"
-            priority={false}
-          />
-        </motion.div>
-      </motion.div>
     </section>
   )
 }
@@ -296,12 +260,16 @@ function PublicCatalogSection({ onLoginClick, selectedCat, onCategoryChange, sec
 // ─── Benefits Section ──────────────────────────────────────────────────────────
 
 const BENEFITS = [
-  { Icon: Award,       label: 'Certificado Europeo',         desc: 'Toda nuestra línea cumple los estándares CE de la Unión Europea.' },
+  { Icon: Award,       label: 'Certificación Europea',       desc: 'Toda nuestra línea cumple los estándares CE de la Unión Europea.' },
   { Icon: ShieldCheck, label: 'Seguridad y Confianza',       desc: 'Más de 500 ópticas confían en BIANNI en todo el país.' },
-  { Icon: Star,        label: 'Garantía de Calidad',         desc: 'Materiales premium: Zilo, TR90 y acero con bisagras triples.' },
-  { Icon: Truck,       label: 'Envíos Rápidos',              desc: 'Despacho a todo el país. Pedidos procesados en 24-48 hs.' },
-  { Icon: ShoppingBag, label: 'Sin Compra Mínima',           desc: 'Pedí lo que necesitás, cuando lo necesitás, sin restricciones.' },
   { Icon: Headphones,  label: 'Servicio Post Venta',         desc: 'Asesoramiento técnico y soporte dedicado para tu óptica.' },
+  { Icon: ShoppingBag, label: 'Sin Compra Mínima',           desc: 'Pedí lo que necesitás, cuando lo necesitás, sin restricciones.' },
+  { Icon: Truck,       label: 'Envíos a Todo el País',       desc: 'Despacho rápido a cualquier punto. Pedidos procesados en 24-48 hs.' },
+  { Icon: Gift,        label: 'Exhibidores de Regalo',       desc: 'Material de exhibición sin cargo para lucir BIANNI en tu local.' },
+  { Icon: Sparkles,    label: 'Contenido Exclusivo',         desc: 'Biblioteca de fotos, videos y flyers lista para tu marketing.' },
+  { Icon: Rocket,      label: 'Prioridad en Lanzamientos',   desc: 'Acceso anticipado a preventas y colecciones nuevas.' },
+  { Icon: Star,        label: 'Vendedor y Capacitación',     desc: 'Un vendedor asignado que te acompaña y capacita a tu equipo.' },
+  { Icon: MapPin,      label: 'Visibilidad en el Mapa',      desc: 'Aparecé en el buscador de ópticas BIANNI para nuevos clientes.' },
 ]
 
 function BenefitsSection() {
@@ -330,16 +298,16 @@ function BenefitsSection() {
         </motion.p>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-14 max-w-4xl mx-auto">
+      {/* Grid — 10 beneficios: 2 col en mobile, 5 col en desktop (2 filas parejas) */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-12 max-w-6xl mx-auto">
         {BENEFITS.map(({ Icon, label, desc }, i) => (
           <motion.div
             key={label}
-            className="flex flex-col items-center text-center gap-3"
-            initial={{ opacity: 0, y: 40 }}
+            className="flex flex-col items-center text-center gap-2.5"
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.75, delay: i * 0.1, ease: EASE_OUT }}
+            transition={{ duration: 0.6, delay: Math.min(i, 5) * 0.08, ease: EASE_OUT }}
           >
             {/* Icon circle */}
             <motion.div
@@ -353,6 +321,17 @@ function BenefitsSection() {
             <p className="text-stone-400 text-xs leading-relaxed max-w-[180px]">{desc}</p>
           </motion.div>
         ))}
+      </div>
+
+      {/* CTA al formulario */}
+      <div className="flex justify-center mt-16">
+        <a
+          href="#sumate-form"
+          className="inline-flex items-center gap-2 bg-black text-white px-8 py-4 text-[11px] tracking-[0.22em] uppercase font-medium hover:bg-stone-800 transition-colors"
+        >
+          Quiero ser representante
+          <Rocket size={13} strokeWidth={1.5} />
+        </a>
       </div>
     </section>
   )
@@ -408,7 +387,7 @@ function JoinFormSection() {
   ]
 
   return (
-    <section className="bg-black py-28 px-8 md:px-16 border-t border-white/5 overflow-hidden">
+    <section id="sumate-form" className="scroll-mt-20 bg-black py-28 px-8 md:px-16 border-t border-white/5 overflow-hidden">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-14">
@@ -745,19 +724,16 @@ export default function HomePage() {
       {/* 1 — Hero slideshow (BATCH 1 del rediseño público) */}
       <HeroSlideshow />
 
-      {/* 2 — Statement: "Conoce nuestra línea exclusiva" */}
+      {/* 2 — Statement / slogan de marca */}
       <StatementSection />
 
       {/* 3 — Carrusel de novedades (BATCH 2) — scroll infinito de productos novedad */}
       <NoveltyMarquee />
 
-      {/* 4 — Editorial poster */}
-      <EditorialSection />
-
-      {/* 5 — Colecciones: HoverSlider de categorías dinámicas (BATCH 3) */}
+      {/* 4 — Colecciones: HoverSlider de categorías dinámicas (BATCH 3) */}
       <CategoriesHoverSlider onSelectCategory={handleCategoryClick} />
 
-      {/* 5 — Public catalog */}
+      {/* 5 — Catálogo visual / lookbook (BATCH 4) */}
       <PublicCatalogSection
         onLoginClick={() => setLoginOpen(true)}
         selectedCat={selectedCat}
@@ -765,10 +741,10 @@ export default function HomePage() {
         sectionRef={catalogRef}
       />
 
-      {/* 6 — Why BIANNI (white section) */}
+      {/* 6 — ¿Por qué elegir BIANNI? (beneficios) */}
       <BenefitsSection />
 
-      {/* 6.5 — CTA Mapa de ópticas (lleva a /mapa) */}
+      {/* 7 — CTA Mapa de ópticas (lleva a /mapa) */}
       <MapCtaSection />
 
       {/* 7 — Join form */}
