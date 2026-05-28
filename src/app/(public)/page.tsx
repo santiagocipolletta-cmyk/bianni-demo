@@ -799,7 +799,7 @@ export default function HomePage() {
       <PublicNav onLoginClick={() => setLoginOpen(true)} />
 
       {/* 1 — Hero slideshow (BATCH 1 del rediseño público) */}
-      <HeroSlideshow onLoginClick={() => setLoginOpen(true)} />
+      <HeroSlideshow />
 
       {/* 2 — Statement: "Conoce nuestra línea exclusiva" */}
       <StatementSection />

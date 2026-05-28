@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
-import { ArrowRight, LogIn } from 'lucide-react'
+import { ShinyButton } from '@/components/ui/shiny-button'
 
 /**
  * HeroSlideshow — hero de la home pública BIANNI.
@@ -54,15 +54,12 @@ const AUTOPLAY_INTERVAL = 3000
 /** Alto aproximado del PublicNav (py-6 + logo) — la imagen arranca debajo */
 const NAV_OFFSET = '76px'
 
-interface HeroSlideshowProps {
-  onLoginClick: () => void
-}
-
 function pad(n: number): string {
   return n.toString().padStart(2, '0')
 }
 
-export function HeroSlideshow({ onLoginClick }: HeroSlideshowProps) {
+export function HeroSlideshow() {
+  const router = useRouter()
   const [current, setCurrent] = useState(0)
   const [paused, setPaused] = useState(false)
 
@@ -148,29 +145,17 @@ export function HeroSlideshow({ onLoginClick }: HeroSlideshowProps) {
           </motion.div>
         </AnimatePresence>
 
-        {/* CTAs */}
+        {/* CTA único: "Quiero ser representante" con efecto shiny.
+            El acceso a cuenta vive solo en la barra superior. */}
         <motion.div
-          className="flex flex-col sm:flex-row gap-2.5 mt-6"
+          className="mt-6"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          {/* Primario: totalmente transparente con recuadro blanco */}
-          <Link
-            href="/sumate"
-            className="group inline-flex items-center justify-center gap-2 border border-white text-white px-6 py-3 text-[10px] tracking-[0.22em] uppercase hover:bg-white hover:text-black transition-colors"
-          >
+          <ShinyButton onClick={() => router.push('/sumate')}>
             Quiero ser representante
-            <ArrowRight size={12} strokeWidth={2} className="transition-transform group-hover:translate-x-0.5" />
-          </Link>
-          {/* Secundario: glass oscuro semi-transparente */}
-          <button
-            onClick={onLoginClick}
-            className="inline-flex items-center justify-center gap-2 bg-black/30 backdrop-blur-md border border-white/25 text-white px-6 py-3 text-[10px] tracking-[0.22em] uppercase hover:bg-black/50 hover:border-white/40 transition-colors"
-          >
-            <LogIn size={12} strokeWidth={2} />
-            Ingresá a tu cuenta
-          </button>
+          </ShinyButton>
         </motion.div>
       </div>
 
