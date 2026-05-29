@@ -42,13 +42,13 @@ function PublicNav({ onLoginClick }: { onLoginClick: () => void }) {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 md:px-12 py-6 transition-all duration-500 border-b ${
+      className={`fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 md:px-12 py-3 transition-all duration-500 border-b ${
         scrolled
-          ? 'bg-black/40 backdrop-blur-md border-white/[0.06]'
-          : 'bg-black border-white/10'
+          ? 'bg-black/55 backdrop-blur-md border-white/[0.06]'
+          : 'bg-black/25 backdrop-blur-md border-white/[0.06]'
       }`}
     >
-      <Logo variant="wordmark" className="h-7" />
+      <Logo variant="wordmark" className="h-6" />
       <div className="flex items-center gap-3 md:gap-6">
         {/* Links públicos — solo desktop */}
         <Link

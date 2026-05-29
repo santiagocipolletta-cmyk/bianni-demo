@@ -51,8 +51,6 @@ const SLIDES: Slide[] = [
 ]
 
 const AUTOPLAY_INTERVAL = 3000
-/** Alto aproximado del PublicNav (py-6 + logo) — la imagen arranca debajo */
-const NAV_OFFSET = '76px'
 
 function pad(n: number): string {
   return n.toString().padStart(2, '0')
@@ -96,11 +94,8 @@ export function HeroSlideshow() {
       aria-roledescription="carousel"
       aria-label="Presentación destacada de BIANNI Eyewear"
     >
-      {/* Imagen: arranca debajo de la barra superior (offset de nav) */}
-      <div
-        className="absolute inset-x-0 bottom-0"
-        style={{ top: NAV_OFFSET }}
-      >
+      {/* Imagen: full-bleed desde el inicio de la página (por detrás de la barra) */}
+      <div className="absolute inset-0">
         <AnimatePresence>
           <motion.div
             key={slide.image}
