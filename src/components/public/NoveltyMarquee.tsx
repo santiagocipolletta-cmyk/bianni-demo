@@ -28,14 +28,7 @@ export function NoveltyMarquee() {
   }
 
   return (
-    <section className="bg-black border-y border-[#1A1A1A] py-12 overflow-hidden">
-      <div className="px-6 md:px-10 lg:px-14 mb-8">
-        <p className="text-[10px] tracking-[0.4em] uppercase text-emerald-400">Nuevos ingresos</p>
-        <h2 className="font-display text-2xl md:text-3xl text-white font-light tracking-[0.05em] mt-1">
-          Últimas novedades
-        </h2>
-      </div>
-
+    <section className="bg-white pb-16 overflow-hidden">
       {/* Marquee */}
       <div className="group relative w-full overflow-hidden">
         <div className="flex w-max gap-4 animate-marquee group-hover:[animation-play-state:paused]">
@@ -44,7 +37,7 @@ export function NoveltyMarquee() {
               key={`${product.id}-${i}`}
               className="relative flex-shrink-0 w-[240px] md:w-[280px]"
             >
-              <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden">
+              <div className="relative aspect-[4/5] bg-white overflow-hidden">
                 <Image
                   src={product.imageUrl}
                   alt={product.name}
@@ -65,10 +58,10 @@ export function NoveltyMarquee() {
               </div>
               {/* Nombre siempre visible — clave en mobile (no hay hover) */}
               <div className="md:hidden pt-2 px-1">
-                <p className="text-[8px] tracking-[0.2em] uppercase text-emerald-400">
+                <p className="text-[8px] tracking-[0.2em] uppercase text-emerald-600">
                   {catName(product.categoryId)}
                 </p>
-                <p className="text-white text-xs font-light leading-snug">{product.name}</p>
+                <p className="text-stone-800 text-xs font-light leading-snug">{product.name}</p>
               </div>
             </article>
           ))}
