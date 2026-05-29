@@ -1,14 +1,15 @@
 'use client'
 
-import Link from 'next/link'
-import { UserPlus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useDataStore } from '@/stores/data-store'
 import { getWhatsAppUrl } from '@/lib/utils'
+import { ShinyButton } from '@/components/ui/shiny-button'
 
 /**
- * PublicMobileBar — barra inferior fija solo en mobile, con dos CTAs de
- * captación: "Ser representante" y WhatsApp, en estilo glass translúcido
- * igual a la barra superior. Se renderiza desde el layout público.
+ * PublicMobileBar — barra inferior fija solo en mobile, fondo totalmente
+ * transparente. Dos CTAs con el mismo ShinyButton (estilo + animación) que
+ * el CTA del hero: "Ser representante" y WhatsApp. Se renderiza desde el
+ * layout público.
  */
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -20,6 +21,7 @@ function WhatsAppIcon({ className }: { className?: string }) {
 }
 
 export function PublicMobileBar() {
+  const router = useRouter()
   const { settings } = useDataStore()
   const waUrl = getWhatsAppUrl(
     settings.whatsappBianni,
@@ -27,30 +29,23 @@ export function PublicMobileBar() {
   )
 
   return (
-    <div
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch bg-black/55 backdrop-blur-md border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
-    >
-      {/* CTA principal — Ser representante */}
-      <Link
-        href="/sumate"
-        className="flex-1 flex items-center justify-center gap-2 py-4 text-white text-[11px] tracking-[0.18em] uppercase active:bg-white/10 transition-colors"
+    <div className="md:hidden fixed bottom-0 inset-x-0 z-40 flex gap-2 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+      <ShinyButton
+        className="flex-1 text-center"
+        onClick={() => router.push('/sumate')}
       >
-        <UserPlus size={14} strokeWidth={1.5} />
         Ser representante
-      </Link>
+      </ShinyButton>
 
-      <span className="w-px bg-white/15" aria-hidden="true" />
-
-      {/* CTA WhatsApp — acento verde */}
-      <a
-        href={waUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600/85 text-white text-[11px] tracking-[0.18em] uppercase active:bg-emerald-700/90 transition-colors"
+      <ShinyButton
+        className="flex-1 text-center"
+        onClick={() => window.open(waUrl, '_blank', 'noopener')}
       >
-        <WhatsAppIcon className="w-4 h-4" />
-        WhatsApp
-      </a>
+        <span className="inline-flex items-center gap-1.5">
+          <WhatsAppIcon className="w-3.5 h-3.5" />
+          WhatsApp
+        </span>
+      </ShinyButton>
     </div>
   )
 }
