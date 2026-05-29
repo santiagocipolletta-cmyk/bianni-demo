@@ -33,9 +33,9 @@ export function CategoriesHoverSlider({ onSelectCategory }: CategoriesHoverSlide
   if (sorted.length === 0) return null
 
   return (
-    <HoverSlider className="bg-white text-black flex flex-col md:flex-row md:items-center justify-between gap-12 md:gap-10 px-6 md:px-12 lg:px-20 py-20 md:py-28">
-      {/* Izquierda: nombres con stagger por carácter */}
-      <div className="flex flex-col gap-1 md:gap-2">
+    <HoverSlider className="bg-white text-black flex flex-col md:flex-row md:items-stretch justify-between gap-12 md:gap-10 px-6 md:px-12 lg:px-20 py-20 md:py-28">
+      {/* Izquierda: nombres con stagger por carácter — centrados verticalmente contra la imagen */}
+      <div className="flex flex-col justify-center gap-1 md:gap-2">
         {sorted.map((cat, i) => (
           <TextStaggerHover
             key={cat.id}
