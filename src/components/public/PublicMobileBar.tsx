@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDataStore } from '@/stores/data-store'
 import { getWhatsAppUrl } from '@/lib/utils'
@@ -8,8 +9,11 @@ import { ShinyButton } from '@/components/ui/shiny-button'
 /**
  * PublicMobileBar — barra inferior fija solo en mobile, fondo totalmente
  * transparente. Dos CTAs con el mismo ShinyButton (estilo + animación) que
- * el CTA del hero: "Ser representante" y WhatsApp. Se renderiza desde el
- * layout público.
+ * el CTA del hero: "Ser representante" y WhatsApp.
+ *
+ * Color adaptativo: detecta la luminancia del fondo detrás de la barra al
+ * scrollear y cambia el tono de los botones (blanco sobre oscuro, negro sobre
+ * claro) para que siempre se lean. Mantiene la transparencia total.
  */
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -23,22 +27,78 @@ function WhatsAppIcon({ className }: { className?: string }) {
 export function PublicMobileBar() {
   const router = useRouter()
   const { settings } = useDataStore()
+  const barRef = useRef<HTMLDivElement>(null)
+  // tone 'light' = botones blancos (sobre fondo oscuro); 'dark' = negros (sobre fondo claro)
+  const [tone, setTone] = useState<'light' | 'dark'>('light')
+
   const waUrl = getWhatsAppUrl(
     settings.whatsappBianni,
     'Hola! Me interesa ser representante de BIANNI.'
   )
 
+  useEffect(() => {
+    let raf = 0
+
+    function detect() {
+      const bar = barRef.current
+      if (!bar) return
+      const rect = bar.getBoundingClientRect()
+      const x = window.innerWidth / 2
+      const y = Math.max(0, rect.top - 8) // justo encima de la barra
+      // Ocultar la barra al sampleo para no auto-detectarse
+      const prevPe = bar.style.pointerEvents
+      bar.style.pointerEvents = 'none'
+      let el = document.elementFromPoint(x, y) as HTMLElement | null
+      bar.style.pointerEvents = prevPe
+
+      let lum = 0 // por defecto, oscuro
+      while (el) {
+        const bg = getComputedStyle(el).backgroundColor
+        const m = bg.match(/rgba?\(([^)]+)\)/)
+        if (m) {
+          const parts = m[1].split(',').map((s) => parseFloat(s.trim()))
+          const [r, g, b, a = 1] = parts
+          if (a > 0.3) {
+            lum = 0.299 * r + 0.587 * g + 0.114 * b
+            break
+          }
+        }
+        el = el.parentElement
+      }
+      setTone(lum > 140 ? 'dark' : 'light')
+    }
+
+    function onScroll() {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(detect)
+    }
+
+    detect()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [])
+
   return (
-    <div className="md:hidden fixed bottom-0 inset-x-0 z-40 flex gap-2 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+    <div
+      ref={barRef}
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 flex gap-2 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+    >
       <ShinyButton
-        className="flex-1 text-center"
+        tone={tone}
+        className="flex-1 text-center py-2"
         onClick={() => router.push('/sumate')}
       >
         Ser representante
       </ShinyButton>
 
       <ShinyButton
-        className="flex-1 text-center"
+        tone={tone}
+        className="flex-1 text-center py-2"
         onClick={() => window.open(waUrl, '_blank', 'noopener')}
       >
         <span className="inline-flex items-center gap-1.5">

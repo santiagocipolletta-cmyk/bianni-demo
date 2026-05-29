@@ -6,9 +6,11 @@ import { cn } from '@/lib/utils'
 
 /**
  * ShinyButton — botón con efecto de brillo animado que recorre el texto y el borde.
- * Adaptado del componente original (magicui) al proyecto BIANNI:
- *  - import desde 'motion/react' (no 'framer-motion')
- *  - color del brillo en blanco directo (rgb) porque --primary acá es hex, no HSL
+ * Adaptado del componente original (magicui) al proyecto BIANNI.
+ *
+ * tone:
+ *  - 'light' (default): texto y brillo BLANCOS — para fondos oscuros (hero).
+ *  - 'dark': texto y brillo NEGROS — para fondos claros (secciones blancas).
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -36,22 +38,28 @@ const animationProps: any = {
 interface ShinyButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode
   className?: string
+  tone?: 'light' | 'dark'
 }
 
-export function ShinyButton({ children, className, ...props }: ShinyButtonProps) {
+export function ShinyButton({ children, className, tone = 'light', ...props }: ShinyButtonProps) {
+  const isDark = tone === 'dark'
   return (
     <motion.button
       {...animationProps}
       {...(props as object)}
       className={cn(
         'relative rounded-lg px-7 py-3 font-medium backdrop-blur-xl transition-shadow duration-300 ease-in-out',
-        'bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.10)_0%,transparent_60%)]',
-        'hover:shadow-[0_0_20px_rgba(255,255,255,0.10)]',
+        isDark
+          ? 'bg-[radial-gradient(circle_at_50%_0%,rgba(0,0,0,0.05)_0%,transparent_60%)] hover:shadow-[0_0_20px_rgba(0,0,0,0.10)]'
+          : 'bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.10)_0%,transparent_60%)] hover:shadow-[0_0_20px_rgba(255,255,255,0.10)]',
         className,
       )}
     >
       <span
-        className="relative block size-full text-[11px] uppercase tracking-[0.2em] font-light text-white/90"
+        className={cn(
+          'relative block size-full text-[11px] uppercase tracking-[0.2em] font-light',
+          isDark ? 'text-black/80' : 'text-white/90',
+        )}
         style={{
           maskImage:
             'linear-gradient(-75deg,rgba(255,255,255,1) calc(var(--x) + 20%),transparent calc(var(--x) + 30%),rgba(255,255,255,1) calc(var(--x) + 100%))',
@@ -66,7 +74,12 @@ export function ShinyButton({ children, className, ...props }: ShinyButtonProps)
           maskComposite: 'exclude',
           WebkitMaskComposite: 'xor',
         }}
-        className="absolute inset-0 z-10 block rounded-[inherit] p-px bg-[linear-gradient(-75deg,rgba(255,255,255,0.1)_calc(var(--x)+20%),rgba(255,255,255,0.5)_calc(var(--x)+25%),rgba(255,255,255,0.1)_calc(var(--x)+100%))]"
+        className={cn(
+          'absolute inset-0 z-10 block rounded-[inherit] p-px',
+          isDark
+            ? 'bg-[linear-gradient(-75deg,rgba(0,0,0,0.1)_calc(var(--x)+20%),rgba(0,0,0,0.45)_calc(var(--x)+25%),rgba(0,0,0,0.1)_calc(var(--x)+100%))]'
+            : 'bg-[linear-gradient(-75deg,rgba(255,255,255,0.1)_calc(var(--x)+20%),rgba(255,255,255,0.5)_calc(var(--x)+25%),rgba(255,255,255,0.1)_calc(var(--x)+100%))]',
+        )}
       />
     </motion.button>
   )
