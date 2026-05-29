@@ -4,11 +4,12 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'motion/react'
+import { motion, useInView } from 'motion/react'
 import { Lock, Award, ShieldCheck, Star, Truck, ShoppingBag, Headphones, Gift, Sparkles, Rocket, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import { Logo } from '@/components/brand/Logo'
 import { LoginModal } from '@/components/auth/LoginModal'
+import { TextEffect } from '@/components/ui/text-effect'
 import { HeroSlideshow } from '@/components/public/HeroSlideshow'
 import { NoveltyMarquee } from '@/components/public/NoveltyMarquee'
 import { CategoriesHoverSlider } from '@/components/public/CategoriesHoverSlider'
@@ -95,19 +96,20 @@ function PublicNav({ onLoginClick }: { onLoginClick: () => void }) {
 // ─── Statement Section ─────────────────────────────────────────────────────────
 
 function StatementSection() {
+  const ref = useRef<HTMLDivElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-80px' })
+
   return (
-    <section className="bg-white pt-16 md:pt-20 pb-10 md:pb-12 px-8 md:px-16 lg:px-24 overflow-hidden">
-      <motion.p
-        className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light leading-[1.25] text-stone-500 max-w-4xl"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-60px' }}
-        transition={{ duration: 0.9, ease: EASE_OUT }}
+    <section ref={ref} className="bg-white pt-16 md:pt-20 pb-10 md:pb-12 px-8 md:px-16 lg:px-24 overflow-hidden">
+      <TextEffect
+        as="p"
+        per="word"
+        preset="blur"
+        trigger={inView}
+        className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light leading-[1.25] text-stone-600 max-w-4xl"
       >
-        La marca de lentes que{' '}
-        <span className="text-black">potencia tu óptica.</span>{' '}
-        Certificación europea, sin pedido mínimo, envíos a todo el país.
-      </motion.p>
+        La marca de lentes que potencia tu óptica. Certificación europea, sin pedido mínimo, envíos a todo el país.
+      </TextEffect>
     </section>
   )
 }
